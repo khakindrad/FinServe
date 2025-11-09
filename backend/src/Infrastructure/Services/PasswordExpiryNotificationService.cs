@@ -1,4 +1,4 @@
-using FinServe.Core.Entities;
+using Core.Entities;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

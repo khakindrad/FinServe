@@ -1,5 +1,5 @@
+using Core.Entities;
 using Core.Interfaces;
-using FinServe.Core.Entities;
 using System.Threading.Tasks;
 
 namespace Application.Features.Auth.Handlers;

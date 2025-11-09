@@ -1,5 +1,5 @@
+using Core.Entities;
 using Core.Interfaces;
-using FinServe.Core.Entities;
 using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
