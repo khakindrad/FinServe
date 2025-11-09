@@ -9,7 +9,7 @@ export default function Login() {
 
   async function submit(e: any) {
     e.preventDefault();
-    const res = await fetch('/api/proxy/auth/login', {
+    const res = await fetch('https://localhost:54022/api/Auth/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ email, password }),
