@@ -1,0 +1,112 @@
+﻿# ================================================
+# .NET + Visual Studio + Node.js + MySQL .gitignore
+# ================================================
+
+# ======== Build folders ========
+[Bb]in/
+[Oo]bj/
+out/
+dist/
+artifacts/
+publish/
+
+# ======== Visual Studio files ========
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ======== OS temporary files ========
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ======== Logs and temp ========
+*.log
+logs/
+*.tlog
+*.cache
+*.tmp
+temp/
+tmp/
+TestResults/
+coverage/
+
+# ======== NuGet packages ========
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!packages/build/
+!packages/repositories.config
+
+# ======== Build artifacts ========
+*.dll
+*.exe
+*.pdb
+*.mdb
+*.obj
+*.cache
+*.dbmdl
+*.bak
+*.log
+*.zip
+*.tar
+*.gz
+*.7z
+
+# ======== Rider / VS Code ========
+.idea/
+.vscode/
+*.code-workspace
+
+# ======== Environment / Config files ========
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+
+# ======== Node.js / Frontend ========
+node_modules/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+coverage/
+.eslintcache
+.cache/
+*.tsbuildinfo
+
+# ======== MySQL dump files ========
+*.sql
+*.dump
+# allow DB schema file only
+!database/FinServe_DB.sql
+
+# ======== Other tool files ========
+*.vspscc
+*.vssscc
+*.db
+*.bak
+*.mdf
+*.ldf
+
+# ======== Publish / Deployment ========
+publish/
+wwwroot/
+bundle/
+logs/
+Dockerfile
+docker-compose.yml
+
+# ======== Python notebook outputs (if used) ========
+.ipynb_checkpoints/
+
+# ======== OS trash ========
+ehthumbs.db
+$RECYCLE.BIN/
