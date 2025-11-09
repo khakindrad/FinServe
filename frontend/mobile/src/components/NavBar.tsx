@@ -1,0 +1,1 @@
+import React from 'react'; export default function NavBar(){ return (<div style={{padding:12,background:'#1976d2',color:'#fff'}}>FinServe Mobile</div>); }

@@ -1,0 +1,1 @@
+import NavBar from '../components/NavBar'; export default function Home(){ return (<div><NavBar/><div style={{padding:16}}>Welcome to FinServe Mobile</div></div>); }

@@ -1,0 +1,1 @@
+export default function NavBar(){ return (<nav style={{padding:12,background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,.08)'}}><strong>FinServe</strong></nav>); }

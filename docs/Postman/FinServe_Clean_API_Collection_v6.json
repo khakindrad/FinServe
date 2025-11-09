@@ -1,0 +1,50 @@
+{
+  "info": {
+    "name": "FinServe Clean API v6",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Register",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"email\":\"user@example.com\",\"password\":\"P@ssw0rd!\",\"fullName\":\"John Doe\" }"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/register",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "register"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Login",
+      "request": {
+        "method": "POST",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"email\":\"user@example.com\",\"password\":\"P@ssw0rd!\" }"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        }
+      }
+    }
+  ]
+}

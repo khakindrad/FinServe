@@ -1,0 +1,1 @@
+-- Please replace with full migration DDL before running in production.

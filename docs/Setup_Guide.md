@@ -1,0 +1,1 @@
+Update appsettings, install .NET 9 SDK preview, run 'dotnet restore' then open solution and start WebAPI project.
