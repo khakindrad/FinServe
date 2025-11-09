@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FinServe.Core.Entities;
-using FinServe.Core.Interfaces;
 using FinServe.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

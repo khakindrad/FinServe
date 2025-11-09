@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-
-namespace FinServe.WebAPI.HostedServices;
+﻿namespace FinServe.WebAPI.HostedServices;
 
 public class PasswordExpiryHostedService : BackgroundService
 {

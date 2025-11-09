@@ -81,6 +81,8 @@ public class AuthController : ControllerBase
         if (!user.EmailVerified || !user.MobileVerified) return Forbid("Email and mobile must be verified");
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow) return Forbid("Account locked");
 
+        //var password = HashPassword("Admin@FinServe123!");
+
         if (!VerifyHashedPassword(user.PasswordHash, dto.Password))
         {
             user.FailedLoginCount++;
@@ -113,31 +115,26 @@ public class AuthController : ControllerBase
     [HttpPut("admin/approve/{id}")] public async Task<IActionResult> ApproveUser(int id) { var user = await _users.GetByIdAsync(id); if (user == null) return NotFound(); user.IsApproved = true; await _users.UpdateAsync(user); await _users.SaveChangesAsync(); await _email.SendEmailAsync(user.Email, "Account approved", "Your account is approved by admin."); return Ok(new { message = "Approved" }); }
 
     // Helpers (PBKDF2)
-    private string HashPassword(string password)
+    private static string HashPassword(string password)
     {
-        using var rng = RandomNumberGenerator.Create();
-        var salt = new byte[16]; rng.GetBytes(salt);
-        var derived = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
-        var bytes = new byte[1 + salt.Length + derived.Length];
-        bytes[0] = 0x01;
-        Buffer.BlockCopy(salt, 0, bytes, 1, salt.Length);
-        Buffer.BlockCopy(derived, 0, bytes, 1 + salt.Length, derived.Length);
-        return Convert.ToBase64String(bytes);
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
+        byte[] result = new byte[49];
+        result[0] = 0x01;
+        Buffer.BlockCopy(salt, 0, result, 1, 16);
+        Buffer.BlockCopy(hash, 0, result, 17, 32);
+        return Convert.ToBase64String(result);
     }
 
-    private bool VerifyHashedPassword(string hash, string password)
+    private static bool VerifyHashedPassword(string hash, string password)
     {
-        try
-        {
-            var bytes = Convert.FromBase64String(hash);
-            var salt = new byte[16];
-            Buffer.BlockCopy(bytes, 1, salt, 0, 16);
-            var stored = new byte[32];
-            Buffer.BlockCopy(bytes, 1 + 16, stored, 0, 32);
-            var derived = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
-            return CryptographicOperations.FixedTimeEquals(stored, derived);
-        }
-        catch { return false; }
+        var bytes = Convert.FromBase64String(hash);
+        var salt = new byte[16];
+        Buffer.BlockCopy(bytes, 1, salt, 0, 16);
+        var stored = new byte[32];
+        Buffer.BlockCopy(bytes, 17, stored, 0, 32);
+        var derived = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
+        return CryptographicOperations.FixedTimeEquals(stored, derived);
     }
 
     private static string GenerateOtp(int digits)

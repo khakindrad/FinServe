@@ -1,6 +1,5 @@
 using FinServe.Core.Entities;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace FinServe.Infrastructure.Data;
 public class AppDbContext : DbContext
@@ -11,6 +10,7 @@ public class AppDbContext : DbContext
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
     public DbSet<PasswordHistory> PasswordHistories { get; set; } = null!;
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
+    public DbSet<LoginHistory> LoginHistory { get; set; }
     public DbSet<DashboardAlert> DashboardAlerts { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -48,7 +48,7 @@ public class AppDbContext : DbContext
                 MobileVerified = true,
                 // This is the PBKDF2-based hash format used by the AuthController HashPassword helper.
                 // Replace with your own hashed value if you prefer.
-                PasswordHash = "AQClchAv7t1dq3Rmxu7xgmEK4EbByfwx4UV0RUZprlFUXnupgTMWrHczDdfQb6z3WZh6AoD2Z8Q2+y4\r\n",
+                PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
                 PasswordLastChanged = System.DateTime.UtcNow
             });
         });
@@ -70,5 +70,20 @@ public class AppDbContext : DbContext
             b.HasOne(a => a.User).WithMany().HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        //modelBuilder.Entity<LoginHistory>(b =>
+        //{
+        //    b.HasKey(l => l.Id);
+        //    b.Property(l => l.Email).HasMaxLength(200);
+        //    b.Property(l => l.IpAddress).HasMaxLength(50);
+        //    b.Property(l => l.Device).HasMaxLength(255);
+        //    b.Property(l => l.Status).HasMaxLength(20).HasDefaultValue("SUCCESS");
+        //    b.Property(l => l.Message).HasMaxLength(255);
+        //    b.Property(l => l.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        //    b.HasOne(l => l.User)
+        //        .WithMany()
+        //        .HasForeignKey(l => l.UserId)
+        //        .OnDelete(DeleteBehavior.SetNull);
+        //});
     }
 }
