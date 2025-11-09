@@ -3,7 +3,7 @@ using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 public class EmailService
 {
     private readonly IConfiguration _config;

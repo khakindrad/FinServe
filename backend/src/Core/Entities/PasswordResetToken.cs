@@ -1,6 +1,6 @@
 using System;
 
-namespace FinServe.Core.Entities;
+namespace Core.Entities;
 
 public class PasswordResetToken
 {
@@ -11,5 +11,5 @@ public class PasswordResetToken
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public bool Used { get; set; } = false;
 
-    public virtual User? User { get; set; }
+    public virtual User User { get; set; }
 }

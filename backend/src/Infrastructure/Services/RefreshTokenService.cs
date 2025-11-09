@@ -1,12 +1,12 @@
-using FinServe.Core.Entities;
-using FinServe.Infrastructure.Data;
+using Core.Entities;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 public class RefreshTokenService
 {
     private readonly AppDbContext _db;

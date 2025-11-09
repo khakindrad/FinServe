@@ -1,6 +1,6 @@
 using System;
 
-namespace FinServe.Core.Entities;
+namespace Core.Entities;
 
 public class DashboardAlert
 {
@@ -11,5 +11,5 @@ public class DashboardAlert
     public bool IsRead { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public virtual User? User { get; set; }
+    public virtual User User { get; set; }
 }

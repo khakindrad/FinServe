@@ -1,10 +1,11 @@
-using FinServe.Core.Interfaces;
-using FinServe.Infrastructure.Data;
-using FinServe.Infrastructure.Repositories;
-using FinServe.Infrastructure.Services;
-using FinServe.WebAPI.Middleware;
+using Core.Interfaces;
+using Infrastructure.Data;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using WebAPI.HostedServices;
+using WebAPI.Middleware;
 
 internal sealed class Program
 {
@@ -28,7 +29,7 @@ internal sealed class Program
             builder.Services.AddScoped<PasswordHistoryService>();
             // Infrastructure services
             builder.Services.AddScoped<PasswordExpiryNotificationService>();
-            builder.Services.AddHostedService<FinServe.WebAPI.HostedServices.PasswordExpiryHostedService>();
+            builder.Services.AddHostedService<PasswordExpiryHostedService>();
 
             builder.Services.AddCors(options =>
             {

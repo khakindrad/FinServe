@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using System.Text.RegularExpressions;
 
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public class PasswordPolicyService
 {
@@ -14,12 +14,12 @@ public class PasswordPolicyService
 
     public (bool IsValid, string Message) ValidatePassword(string password)
     {
-        var minLength = _config.GetValue<int>("Security:PasswordPolicy:MinLength", 8);
-        var requireUpper = _config.GetValue<bool>("Security:PasswordPolicy:RequireUppercase", true);
-        var requireLower = _config.GetValue<bool>("Security:PasswordPolicy:RequireLowercase", true);
-        var requireDigit = _config.GetValue<bool>("Security:PasswordPolicy:RequireDigit", true);
-        var requireSpecial = _config.GetValue<bool>("Security:PasswordPolicy:RequireSpecial", true);
-        var noWhitespace = _config.GetValue<bool>("Security:PasswordPolicy:NoWhitespace", true);
+        var minLength = _config.GetValue("Security:PasswordPolicy:MinLength", 8);
+        var requireUpper = _config.GetValue("Security:PasswordPolicy:RequireUppercase", true);
+        var requireLower = _config.GetValue("Security:PasswordPolicy:RequireLowercase", true);
+        var requireDigit = _config.GetValue("Security:PasswordPolicy:RequireDigit", true);
+        var requireSpecial = _config.GetValue("Security:PasswordPolicy:RequireSpecial", true);
+        var noWhitespace = _config.GetValue("Security:PasswordPolicy:NoWhitespace", true);
 
         if (string.IsNullOrWhiteSpace(password))
             return (false, "Password cannot be empty.");

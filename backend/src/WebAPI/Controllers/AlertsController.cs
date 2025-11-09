@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using FinServe.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Infrastructure.Data;
 
-namespace FinServe.WebAPI.Controllers;
+namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

@@ -1,7 +1,7 @@
-using FinServe.Core.Entities;
+using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinServe.Infrastructure.Data;
+namespace Infrastructure.Data;
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }

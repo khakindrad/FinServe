@@ -1,12 +1,12 @@
-using FinServe.Core.Entities;
-using FinServe.Core.Interfaces;
-using FinServe.Infrastructure.Data;
+using Core.Entities;
+using Core.Interfaces;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace FinServe.Infrastructure.Repositories;
+namespace Infrastructure.Repositories;
 public class UserRepository : IUserRepository
 {
     private readonly AppDbContext _db;

@@ -1,8 +1,8 @@
+using Core.Interfaces;
 using FinServe.Core.Entities;
-using FinServe.Core.Interfaces;
 using System.Threading.Tasks;
 
-namespace FinServe.Application.Features.Auth.Handlers;
+namespace Application.Features.Auth.Handlers;
 public class RegisterUserHandler
 {
     private readonly IUserRepository _repo;

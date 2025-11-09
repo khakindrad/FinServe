@@ -1,6 +1,6 @@
 using OtpNet;
 using System;
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 public class MfaService
 {
     public string GenerateSecret() => Base32Encoding.ToString(KeyGeneration.GenerateRandomKey(20));

@@ -1,4 +1,4 @@
-﻿namespace FinServe.WebAPI.HostedServices;
+﻿namespace WebAPI.HostedServices;
 
 public class PasswordExpiryHostedService : BackgroundService
 {
@@ -24,7 +24,7 @@ public class PasswordExpiryHostedService : BackgroundService
             try
             {
                 using var scope = _provider.CreateScope();
-                var svc = scope.ServiceProvider.GetRequiredService<FinServe.Infrastructure.Services.PasswordExpiryNotificationService>();
+                var svc = scope.ServiceProvider.GetRequiredService<Infrastructure.Services.PasswordExpiryNotificationService>();
 
                 if (runHour >= 0)
                 {

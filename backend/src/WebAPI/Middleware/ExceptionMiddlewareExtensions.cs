@@ -1,4 +1,4 @@
-﻿namespace FinServe.WebAPI.Middleware;
+﻿namespace WebAPI.Middleware;
 
 public static class ExceptionMiddlewareExtensions
 {

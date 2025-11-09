@@ -1,12 +1,12 @@
+using Core.Interfaces;
 using FinServe.Core.Entities;
-using FinServe.Core.Interfaces;
-using FinServe.Infrastructure.Data;
-using FinServe.Infrastructure.Services;
+using Infrastructure.Data;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Serilog;
 
-namespace FinServe.WebAPI.Controllers;
+namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/admin")]
@@ -59,7 +59,7 @@ public class AdminController : ControllerBase
         user.LockoutEndAt = null;
         user.FailedLoginCount = 0;
 
-        if (body != null && ((body.reactivate != null && (bool)body.reactivate)))
+        if (body != null && (body.reactivate != null && (bool)body.reactivate))
         {
             user.IsActive = true;
         }

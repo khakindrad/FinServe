@@ -1,5 +1,5 @@
 using FinServe.Core.Entities;
-using FinServe.Infrastructure.Data;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public class PasswordExpiryNotificationService
 {
@@ -32,7 +32,7 @@ public class PasswordExpiryNotificationService
     /// </summary>
     public async Task<int> RunAsync(CancellationToken cancellationToken = default)
     {
-        var reminderDays = _config.GetValue<int>("Security:PasswordExpiryReminderDays", 7);
+        var reminderDays = _config.GetValue("Security:PasswordExpiryReminderDays", 7);
         var now = DateTime.UtcNow;
         var reminderUntil = now.AddDays(reminderDays);
 

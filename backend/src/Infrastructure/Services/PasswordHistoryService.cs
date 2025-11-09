@@ -1,5 +1,5 @@
-using FinServe.Core.Entities;
-using FinServe.Infrastructure.Data;
+using Core.Entities;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
-namespace FinServe.Infrastructure.Services;
+namespace Infrastructure.Services;
 
 public class PasswordHistoryService
 {
@@ -22,7 +22,7 @@ public class PasswordHistoryService
 
     public async Task<bool> IsPasswordReusedAsync(User user, string newPassword)
     {
-        var lastN = _config.GetValue<int>("Security:PasswordHistoryCount", 5);
+        var lastN = _config.GetValue("Security:PasswordHistoryCount", 5);
         var histories = await _db.PasswordHistories
             .Where(p => p.UserId == user.Id)
             .OrderByDescending(p => p.CreatedAt)

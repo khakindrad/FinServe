@@ -2,7 +2,7 @@
 using System.Text.Json;
 using Serilog;
 
-namespace FinServe.WebAPI.Middleware;
+namespace WebAPI.Middleware;
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
