@@ -1,6 +1,5 @@
 using Core.Entities;
 using Core.Interfaces;
-using System.Threading.Tasks;
 
 namespace Application.Features.Auth.Handlers;
 public class RegisterUserHandler
