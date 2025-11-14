@@ -1,17 +1,16 @@
-name: Backend CI
+name: Backend CD Deploy
 
 on:
   push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - 'v*'     # Deploy only when a release tag is created (v1.0.0, etc.)
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@v3
 
     - name: Setup .NET
@@ -19,11 +18,25 @@ jobs:
       with:
         dotnet-version: 8.0.x
 
-    - name: Restore dependencies
-      run: dotnet restore ./backend
+    - name: Publish Backend (Self-contained)
+      run: |
+        dotnet publish ./backend/WebAPI.csproj -c Release -r linux-x64 --self-contained true -o ./publish
 
-    - name: Build
-      run: dotnet build ./backend --configuration Release --no-restore
+    - name: Upload files to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "publish/*"
+        target: "/home/ec2-user/FinServeApi"
 
-    - name: Run Tests
-      run: dotnet test ./backend --no-build --verbosity normal
+    - name: Restart backend service
+      uses: appleboy/ssh-action@v0.1.6
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo systemctl restart kestrel-finserve.service
+          sudo systemctl status kestrel-finserve.service --no-pager
