@@ -1,174 +1,158 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
-
+"use client";
+import { useState } from "react";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, EyeOff, User, Mail, Phone, MapPin, Calendar } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { authService } from "@/services/authService";
+import { RegisterRequest } from "@/services/authService";
+import router from "next/router";
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [msg, setMsg] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [dob, setDob] = useState("");
+  const [email, setEmail] = useState("");
+  const [mobile, setMobile] = useState("");
+  const [country, setCountry] = useState("");
+  const [state, setState] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  async function submit(e: any) {
-    e.preventDefault();
-    const res = await fetch('/api/proxy/auth/register', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password, fullName, mobile }),
-    });
-
-    const data = await res.json();
-    if (res.ok)
-      setMsg('Registered successfully. Please check your email for verification and wait for admin approval.');
-    else setMsg(data?.message || 'Registration failed');
-  }
-
+ const handleSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+     setError("");
+     //if (!validateForm()) return; // Stop if validation fails
+     setLoading(true);
+     try {
+      var data = {firstName, middleName, lastName, dob, email, mobile, country, state, city, zip, password};
+       const response = await authService.register(data);
+       if (response) router.push("/login");
+     } catch (err: any) {
+       setError("Somthing went wrong. Please try again.");
+     } finally {
+       setLoading(false);
+     }
+   };
   return (
-    <>
-      <style jsx>{`
-        .register-container {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #f7f9fb, #e3ebf6);
-          font-family: Inter, system-ui, sans-serif;
-        }
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-blue-100 to-gray-50 p-4">
+      <Card className="w-full max-w-2xl p-8 rounded-2xl shadow-2xl overflow-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="text-3xl font-bold text-blue-900 mb-2">Create Account</CardTitle>
+          {/* General Error */}
+              {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
+              )}
 
-        .register-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-          padding: 2rem;
-          width: 100%;
-          max-width: 420px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
+        </CardHeader>
+        
+        <CardContent>
+          <form className="space-y-8" onSubmit={handleSubmit}>
 
-        h2 {
-          color: #0d1b2a;
-          font-size: 1.8rem;
-          margin-bottom: 1.5rem;
-        }
+            {/* Personal Details */}
+            <div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-3">Personal Details</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="pl-10" required />
+                </div>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="Middle Name" value={middleName} onChange={(e) => setMiddleName(e.target.value)} className="pl-10" />
+                </div>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} className="pl-10" required />
+                </div>
+              </div>
 
-        form {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
+              <div className="relative mt-4">
+                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                <Input type="date" placeholder="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} className="pl-10" />
+              </div>
+            </div>
 
-        input {
-          width: 90%;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          border: 1px solid #d1d5db;
-          font-size: 1rem;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
+            {/* Contact Info */}
+            <div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-3">Contact Info</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" required />
+                </div>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input type="tel" placeholder="Mobile" value={mobile} onChange={(e) => setMobile(e.target.value)} className="pl-10" />
+                </div>
+              </div>
+            </div>
 
-        input:focus {
-          border-color: #0077ff;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(0, 119, 255, 0.2);
-        }
+            {/* Address */}
+            <div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-3">Address</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="Country" value={country} onChange={(e) => setCountry(e.target.value)} className="pl-10" />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="State" value={state} onChange={(e) => setState(e.target.value)} className="pl-10" />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="City" value={city} onChange={(e) => setCity(e.target.value)} className="pl-10" />
+                </div>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+                  <Input placeholder="Zip Code" value={zip} onChange={(e) => setZip(e.target.value)} className="pl-10" />
+                </div>
+              </div>
+            </div>
 
-        button {
-          width: 100%;
-          background-color: #0077ff;
-          color: #fff;
-          border: none;
-          padding: 0.75rem;
-          font-size: 1rem;
-          font-weight: 600;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: background 0.3s ease;
-        }
+            {/* Password */}
+            <div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-3">Password</h3>
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" required />
+                <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+            </div>
 
-        button:hover {
-          background-color: #005ecc;
-        }
+            {/* Submit */}
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 shadow-lg mt-4">
 
-        .message {
-          margin-top: 1rem;
-          font-weight: 500;
-          color: #0077ff;
-          text-align: center;
-        }
-
-        .footer {
-          margin-top: 1.2rem;
-          text-align: center;
-          font-size: 0.95rem;
-          color: #4b5563;
-        }
-
-        .footer a {
-          color: #0077ff;
-          text-decoration: none;
-          font-weight: 600;
-          margin-left: 5px;
-        }
-
-        .footer a:hover {
-          text-decoration: underline;
-        }
-
-        @media (max-width: 480px) {
-          .register-card {
-            margin: 1rem;
-            padding: 1.5rem;
-          }
-
-          h2 {
-            font-size: 1.5rem;
-          }
-        }
-      `}</style>
-
-      <div className="register-container">
-        <div className="register-card">
-          <h2>Create Account</h2>
-          <form onSubmit={submit}>
-            <input
-              placeholder="Full Name"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-            />
-            <input
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              required
-            />
-            <input
-              placeholder="Mobile"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-            />
-            <input
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              required
-            />
-            <button type="submit">Register</button>
+              {loading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" /> Saving Data...
+                  </>
+                ) : (
+                  "Register"
+                )}
+            </Button>
           </form>
 
-          <div className="message">{msg}</div>
+          {msg && <p className="mt-4 text-center text-blue-700 font-medium">{msg}</p>}
 
-          <div className="footer">
+          <p className="text-center text-sm text-gray-600 mt-4">
             Already have an account?
-            <Link href="/login"> Login</Link>
-          </div>
-        </div>
-      </div>
-    </>
+            <Link href="/login" className="text-blue-600 font-medium ml-1 hover:underline">
+              Login
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

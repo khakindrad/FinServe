@@ -1,0 +1,6 @@
+# .env.local
+
+NEXT_PUBLIC_API_BASE_URL_DEV=https://localhost:/api
+NEXT_PUBLIC_API_BASE_URL_PROD=http://3.238.174.167:5005/api
+NEXT_PUBLIC_APP_NAME=FinServe
+NEXT_PUBLIC_ENV=development

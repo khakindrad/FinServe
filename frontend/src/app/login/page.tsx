@@ -1,180 +1,167 @@
-'use client';
-import { useState } from 'react';
-import Link from 'next/link';
+"use client";
 
-export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { useAuthContext } from "@/context/AuthContext";
+import { Loader2 } from "lucide-react";
+import { authService } from "@/services/authService";
+import { motion } from "framer-motion";
+import { useValidation } from "@/hooks/useValidation";
+export default function LoginPage() {
+  const router = useRouter();
+  const { login } = useAuthContext();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
-  async function submit(e: any) {
+  const validateForm = () => {
+    let valid = true;
+    setEmailError("");
+    setPasswordError("");
+
+
+    const isEmailValid = useValidation(email, /^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+    const isPasswordValid = useValidation(password, /^(?=.*[A-Z])(?=.*\d).{8,}$/);
+    // Email validation
+    if (!email) {
+      setEmailError("Email is required");
+      valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Invalid email format");
+      valid = false;
+    }
+    // Password validation
+    if (!password) {
+      setPasswordError("Password is required");
+      valid = false;
+    }
+    return valid;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('https://localhost:54022/api/Auth/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    if (res.ok) {
-      setMsg('Logged in (demo)');
-    } else setMsg('Login failed');
-  }
+    setError("");
+
+    if (!validateForm()) return; // Stop if validation fails
+
+    setLoading(true);
+    try {
+      const response = await authService.login(email, password);
+      if (response) router.push("/dashboard");
+    } catch (err: any) {
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <style jsx>{`
-        .login-container {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: linear-gradient(135deg, #f7f9fb, #e3ebf6);
-          font-family: Inter, system-ui, sans-serif;
-        }
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 dark:from-slate-900 dark:to-slate-800 transition-colors">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <Card className="w-[400px] bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 shadow-xl rounded-2xl backdrop-blur-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-semibold text-slate-800 dark:text-white">
+              FinServe
+            </CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-300 mt-1">
+              Sign in to access your financial dashboard
+            </CardDescription>
+          </CardHeader>
 
-        .login-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-          padding: 2rem;
-          width: 100%;
-          max-width: 400px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Email Field */}
+              <div className="flex flex-col">
+                <label className="text-slate-600 dark:text-slate-300 text-sm mb-1 block">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-800 dark:text-white placeholder:text-slate-400"
+                />
+                {emailError && (
+                  <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                )}
+              </div>
 
-        h2 {
-          color: #0d1b2a;
-          font-size: 1.8rem;
-          margin-bottom: 1.5rem;
-        }
+              {/* Password Field */}
+              <div className="flex flex-col">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-slate-600 dark:text-slate-300 text-sm">
+                    Password
+                  </label>
+                 
+                </div>
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-800 dark:text-white placeholder:text-slate-400"
+                />
+                {passwordError && (
+                  <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                )}
+                 <a
+                    href="/forgot-password"
+                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    Forgot Password?
+                  </a>
+              </div>
 
-        form {
-          width: 100%;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
+              {/* General Error */}
+              {error && (
+                <p className="text-red-500 text-sm text-center">{error}</p>
+              )}
 
-        input {
-          width: 90%;
-          padding: 0.75rem 1rem;
-          border-radius: 8px;
-          border: 1px solid #d1d5db;
-          font-size: 1rem;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease;
-          margin: 0 auto;
-        }
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg py-2 transition-colors"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" /> Signing in...
+                  </>
+                ) : (
+                  "Login"
+                )}
+              </Button>
+            </form>
 
-        input:focus {
-          border-color: #0077ff;
-          outline: none;
-          box-shadow: 0 0 0 2px rgba(0, 119, 255, 0.2);
-        }
-
-        button {
-          width: 100%;
-          background-color: #0077ff;
-          color: #fff;
-          border: none;
-          padding: 0.75rem;
-          font-size: 1rem;
-          font-weight: 600;
-          border-radius: 8px;
-          cursor: pointer;
-          transition: background 0.3s ease;
-        }
-
-        button:hover {
-          background-color: #005ecc;
-        }
-
-        .extras {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-          font-size: 0.9rem;
-          margin-top: 0.5rem;
-        }
-
-        .extras a {
-          color: #0077ff;
-          text-decoration: none;
-          transition: color 0.2s ease;
-        }
-
-        .extras a:hover {
-          color: #005ecc;
-        }
-
-        .register-text {
-          margin-top: 1.5rem;
-          font-size: 0.95rem;
-          text-align: center;
-        }
-
-        .register-text a {
-          color: #0077ff;
-          text-decoration: none;
-          font-weight: 600;
-        }
-
-        .register-text a:hover {
-          color: #005ecc;
-        }
-
-        .message {
-          margin-top: 1rem;
-          font-weight: 500;
-          color: #0077ff;
-          text-align: center;
-        }
-
-        @media (max-width: 480px) {
-          .login-card {
-            margin: 1rem;
-            padding: 1.5rem;
-          }
-
-          h2 {
-            font-size: 1.5rem;
-          }
-        }
-      `}</style>
-
-      <div className="login-container">
-        <div className="login-card">
-          <h2>Login</h2>
-          <form onSubmit={submit}>
-            <input
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              required
-            />
-            <input
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              required
-            />
-
-            <div className="extras">
-              <Link href="/forgot">Forgot Password?</Link>
-            </div>
-
-            <button type="submit">Login</button>
-          </form>
-
-          <div className="register-text">
-            Don’t have an account? <Link href="/register">Register</Link>
-          </div>
-
-          <div className="message">{msg}</div>
-        </div>
-      </div>
-    </>
+            <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-4">
+              Don’t have an account?{" "}
+              <a
+                href="/register"
+                className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+              >
+                Register
+              </a>
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </div>
   );
 }

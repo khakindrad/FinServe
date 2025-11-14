@@ -1,20 +1,18 @@
-// import './globals.css';
-import Navbar from '../components/Navbar';
-
-export const metadata = {
-  title: 'FinServe Portal',
-  description: 'Financial Service Portal - Manage loans and access insights',
-};
-
+import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+import  Navbar  from "@/components/layout/Navbar";
+import  Footer  from "@/components/layout/Footer";
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {/* Common Navbar for all pages */}
-        <Navbar />
-        
-        {/* Page Content */}
-        {children}
+        <AuthProvider>
+          {/* Header */}
+          <Navbar />
+          {children}
+          {/* Footer */}
+          <Footer/>
+        </AuthProvider>
       </body>
     </html>
   );
