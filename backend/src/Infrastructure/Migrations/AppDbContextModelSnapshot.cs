@@ -22,7 +22,98 @@ namespace Infrastructure.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
+            modelBuilder.Entity("Core.Entities.City", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("StateId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StateId");
+
+                    b.ToTable("Cities");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Mumbai",
+                            StateId = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Pune",
+                            StateId = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Ahmedabad",
+                            StateId = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "San Francisco",
+                            StateId = 3
+                        });
+                });
+
+            modelBuilder.Entity("Core.Entities.Country", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("IsoCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("MobileCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Countries");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            IsoCode = "IN",
+                            MobileCode = "+91",
+                            Name = "India"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            IsoCode = "US",
+                            MobileCode = "+1",
+                            Name = "United States"
+                        });
+                });
+
+            modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -55,7 +146,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("DashboardAlerts");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.LoginHistory", b =>
+            modelBuilder.Entity("Core.Entities.LoginHistory", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -95,7 +186,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("LoginHistory");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
+            modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -119,7 +210,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("PasswordHistories");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
+            modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -149,7 +240,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("PasswordResetTokens");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
+            modelBuilder.Entity("Core.Entities.RefreshToken", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -188,7 +279,7 @@ namespace Infrastructure.Migrations
                     b.ToTable("RefreshTokens");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.Role", b =>
+            modelBuilder.Entity("Core.Entities.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -249,13 +340,68 @@ namespace Infrastructure.Migrations
                         });
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.User", b =>
+            modelBuilder.Entity("Core.Entities.State", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId");
+
+                    b.ToTable("States");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CountryId = 1,
+                            Name = "Maharashtra"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CountryId = 1,
+                            Name = "Gujarat"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CountryId = 2,
+                            Name = "California"
+                        });
+                });
+
+            modelBuilder.Entity("Core.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("CityId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CountryId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("DeviceTokensJson")
                         .HasColumnType("longtext");
@@ -271,7 +417,7 @@ namespace Infrastructure.Migrations
                     b.Property<int>("FailedLoginCount")
                         .HasColumnType("int");
 
-                    b.Property<string>("FullName")
+                    b.Property<string>("FirstName")
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsActive")
@@ -280,6 +426,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("IsApproved")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("LastName")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime?>("LockoutEndAt")
                         .HasColumnType("datetime(6)");
 
@@ -287,6 +436,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("MfaSecret")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("MiddleName")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Mobile")
@@ -304,12 +456,27 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("PasswordLastChanged")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("ProfileImageUrl")
+                        .HasColumnType("longtext");
+
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("StateId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
                     b.HasKey("Id");
 
+                    b.HasIndex("CityId");
+
+                    b.HasIndex("CountryId");
+
                     b.HasIndex("RoleId");
+
+                    b.HasIndex("StateId");
 
                     b.ToTable("Users");
 
@@ -317,24 +484,38 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
+                            Address = "",
+                            CreatedAt = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(2973),
                             Email = "admin@finserve.com",
                             EmailVerified = true,
                             FailedLoginCount = 0,
-                            FullName = "Platform Admin",
+                            FirstName = "Platform Admin",
                             IsActive = true,
                             IsApproved = true,
+                            LastName = "",
                             MfaEnabled = false,
                             Mobile = "9999999999",
                             MobileVerified = true,
-                            PasswordHash = "AQClchAv7t1dq3Rmxu7xgmEK4EbByfwx4UV0RUZprlFUXnupgTMWrHczDdfQb6z3WZh6AoD2Z8Q2+y4\r\n",
-                            PasswordLastChanged = new DateTime(2025, 11, 9, 12, 38, 27, 228, DateTimeKind.Utc).AddTicks(8759),
+                            PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
+                            PasswordLastChanged = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(6141),
                             RoleId = 1
                         });
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
+            modelBuilder.Entity("Core.Entities.City", b =>
                 {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
+                    b.HasOne("Core.Entities.State", "State")
+                        .WithMany("Cities")
+                        .HasForeignKey("StateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("State");
+                });
+
+            modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
+                {
+                    b.HasOne("Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -343,9 +524,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
+            modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
                 {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
+                    b.HasOne("Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -354,9 +535,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
+            modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
                 {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
+                    b.HasOne("Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -365,9 +546,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
+            modelBuilder.Entity("Core.Entities.RefreshToken", b =>
                 {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
+                    b.HasOne("Core.Entities.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -376,15 +557,54 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("FinServe.Core.Entities.User", b =>
+            modelBuilder.Entity("Core.Entities.State", b =>
                 {
-                    b.HasOne("FinServe.Core.Entities.Role", "Role")
+                    b.HasOne("Core.Entities.Country", "Country")
+                        .WithMany("States")
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Country");
+                });
+
+            modelBuilder.Entity("Core.Entities.User", b =>
+                {
+                    b.HasOne("Core.Entities.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId");
+
+                    b.HasOne("Core.Entities.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId");
+
+                    b.HasOne("Core.Entities.Role", "Role")
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Core.Entities.State", "State")
+                        .WithMany()
+                        .HasForeignKey("StateId");
+
+                    b.Navigation("City");
+
+                    b.Navigation("Country");
+
                     b.Navigation("Role");
+
+                    b.Navigation("State");
+                });
+
+            modelBuilder.Entity("Core.Entities.Country", b =>
+                {
+                    b.Navigation("States");
+                });
+
+            modelBuilder.Entity("Core.Entities.State", b =>
+                {
+                    b.Navigation("Cities");
                 });
 #pragma warning restore 612, 618
         }

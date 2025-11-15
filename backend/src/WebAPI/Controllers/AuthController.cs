@@ -45,7 +45,7 @@ public class AuthController : ControllerBase
         var existing = await _users.GetByEmailAsync(dto.Email);
         if (existing != null) return BadRequest("Email exists");
 
-        var user = new User { Email = dto.Email, Mobile = dto.Mobile, FullName = dto.FullName ?? dto.Email, RoleId = 5, IsActive = true, IsApproved = false };
+        var user = new User { Email = dto.Email, Mobile = dto.Mobile, FirstName = dto.FullName ?? dto.Email, RoleId = 5, IsActive = true, IsApproved = false };
         user.PasswordHash = HashPassword(dto.Password);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));

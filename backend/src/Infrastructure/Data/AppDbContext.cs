@@ -12,6 +12,9 @@ public class AppDbContext : DbContext
     public DbSet<PasswordResetToken> PasswordResetTokens { get; set; } = null!;
     public DbSet<LoginHistory> LoginHistory { get; set; }
     public DbSet<DashboardAlert> DashboardAlerts { get; set; } = null!;
+    public DbSet<Country> Countries { get; set; } = null!;
+    public DbSet<State> States { get; set; } = null!;
+    public DbSet<City> Cities { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,7 +43,7 @@ public class AppDbContext : DbContext
                 Id = 1,
                 Email = "admin@finserve.com",
                 Mobile = "9999999999",
-                FullName = "Platform Admin",
+                FirstName = "Platform Admin",
                 RoleId = 1,
                 IsActive = true,
                 IsApproved = true,
@@ -85,5 +88,50 @@ public class AppDbContext : DbContext
         //        .HasForeignKey(l => l.UserId)
         //        .OnDelete(DeleteBehavior.SetNull);
         //});
+        modelBuilder.Entity<Country>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            b.Property(c => c.IsoCode).HasMaxLength(10);
+            b.Property(c => c.MobileCode).HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<State>(b =>
+        {
+            b.HasKey(s => s.Id);
+            b.Property(s => s.Name).HasMaxLength(100).IsRequired();
+            b.HasOne(s => s.Country)
+                .WithMany(c => c.States)
+                .HasForeignKey(s => s.CountryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<City>(b =>
+        {
+            b.HasKey(c => c.Id);
+            b.Property(c => c.Name).HasMaxLength(100).IsRequired();
+            b.HasOne(c => c.State)
+                .WithMany(s => s.Cities)
+                .HasForeignKey(c => c.StateId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Country>().HasData(
+    new Country { Id = 1, Name = "India", IsoCode = "IN", MobileCode = "+91" },
+    new Country { Id = 2, Name = "United States", IsoCode = "US", MobileCode = "+1" }
+);
+
+        modelBuilder.Entity<State>().HasData(
+            new State { Id = 1, Name = "Maharashtra", CountryId = 1 },
+            new State { Id = 2, Name = "Gujarat", CountryId = 1 },
+            new State { Id = 3, Name = "California", CountryId = 2 }
+        );
+
+        modelBuilder.Entity<City>().HasData(
+            new City { Id = 1, Name = "Mumbai", StateId = 1 },
+            new City { Id = 2, Name = "Pune", StateId = 1 },
+            new City { Id = 3, Name = "Ahmedabad", StateId = 2 },
+            new City { Id = 4, Name = "San Francisco", StateId = 3 }
+        );
     }
 }

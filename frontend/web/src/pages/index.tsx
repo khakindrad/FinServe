@@ -1,1 +1,0 @@
-import NavBar from '../components/NavBar'; export default function Home(){ return (<div><NavBar/><main style={{padding:24}}><h1>Welcome to FinServe Portal</h1></main></div>); }
