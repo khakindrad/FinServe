@@ -1,7 +1,7 @@
 name: Frontend CI
 
 on:
-  workflow_dispatch:       # <---- REQUIRED FOR MANUAL RUN
+  workflow_dispatch:
   push:
     branches:
       - master
