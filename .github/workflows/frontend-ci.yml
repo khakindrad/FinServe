@@ -31,10 +31,10 @@ jobs:
         working-directory: frontend
         run: npm install
 
-      - name: Build Frontend
+      - name: Build frontend
         working-directory: frontend
         run: npm run build
 
-      - name: Run Tests (optional)
+      - name: Run tests (optional)
         working-directory: frontend
         run: npm test --if-present
