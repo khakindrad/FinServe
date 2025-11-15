@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 export default function Forgot() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(''); 
   const [msg, setMsg] = useState('');
 
   async function submit(e: any) {
