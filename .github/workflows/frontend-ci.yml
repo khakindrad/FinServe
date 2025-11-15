@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - master
+      - dev
+      - feature/*
   pull_request:
     branches:
       - master
+      - dev
 
 jobs:
   build:
@@ -16,17 +19,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          cd frontend
-          npm install
+        working-directory: ./frontend
+        run: npm install
 
-      - name: Build project
-        run: |
-          cd frontend
-          npm run build
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Run Tests (optional)
+        working-directory: ./frontend
+        run: npm test --if-present
