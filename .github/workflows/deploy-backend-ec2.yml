@@ -15,22 +15,22 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Setup .NET
+    - name: Setup .NET SDK
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '9.0.x'
 
-    # PUBLISH BACKEND
+    # ✅ THIS TIME CORRECT PROJECT PATH
     - name: Publish Backend (Self-Contained)
       run: |
-        dotnet publish ./backend/src/WebAPI/WebAPI.csproj \
-          -c Release \
-          -o publish \
+        dotnet publish backend/src/WebAPI/WebAPI.csproj \
+          --configuration Release \
           --runtime linux-x64 \
-          --self-contained true
+          --self-contained true \
+          -o ./publish
 
-    # CLEAN ONLY FILES INSIDE FinServeApi (not folder)
-    - name: Clean old files on EC2
+    # CLEAN ONLY FILES (keep folder)
+    - name: Clean FinServeApi folder
       uses: appleboy/ssh-action@v1.2.0
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -40,18 +40,20 @@ jobs:
           sudo rm -rf /home/ec2-user/FinServeApi/*
           sudo mkdir -p /home/ec2-user/FinServeApi
 
-    # COPY WITHOUT SUBFOLDER
-    - name: Upload Backend Files
+    # 🚀 PERFECT FIX — FLAT COPY, NO publish/publish
+    - name: Upload Published Files to EC2
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
-        source: "./publish/."
-        target: "/home/ec2-user/FinServeApi"
 
-    # RESTART SERVICE
+        # 📌 THE FIX
+        source: "./publish/**"
+        target: "/home/ec2-user/FinServeApi"
+        strip_components: 1
+
     - name: Restart Backend Service
       uses: appleboy/ssh-action@v1.2.0
       with:
