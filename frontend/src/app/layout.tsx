@@ -1,18 +1,16 @@
 import "./globals.css";
-import { AuthProvider } from "@/context/AuthContext";
-import  Navbar  from "@/components/layout/Navbar";
-import  Footer  from "@/components/layout/Footer";
+import { AuthProvider } from "@/context/AuthProvider";
+
+export const metadata = {
+  title: "FinServe",
+  description: "Improved Next.js Auth Starter",
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          {/* Header */}
-          <Navbar />
-          {children}
-          {/* Footer */}
-          <Footer/>
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
