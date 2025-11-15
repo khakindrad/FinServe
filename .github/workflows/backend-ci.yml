@@ -1,4 +1,4 @@
-name: Backend CI
+name: Backend CI (Self-Contained)
 
 on:
   workflow_dispatch:
@@ -20,16 +20,20 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore Dependencies
+      - name: Publish Self-Contained Build
         working-directory: backend
-        run: dotnet restore
+        run: |
+          dotnet restore
+          dotnet publish -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            /p:PublishSingleFile=true \
+            /p:PublishTrimmed=true \
+            -o publish
 
-      - name: Publish Project
-        working-directory: backend
-        run: dotnet publish -c Release -o publish
-
-      - name: Upload build artifact
+      - name: Upload self-contained artifact
         uses: actions/upload-artifact@v4
         with:
-          name: backend-build
+          name: backend-self-contained-build
           path: backend/publish
+          retention-days: 7
