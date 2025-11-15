@@ -10,7 +10,7 @@ export default function Notifications(){
   useEffect(()=>{ load(); },[]); 
 
   async function load(){
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token'); 
     const res = await fetch('/api/proxy/alerts/my', { headers: { 'authorization': token ? `Bearer ${token}` : '' } });
     if(res.ok){
       const data = await res.json();
