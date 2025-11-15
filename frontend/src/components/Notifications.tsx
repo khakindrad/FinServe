@@ -7,7 +7,7 @@ export default function Notifications(){
   const [alerts,setAlerts] = useState<Alert[]>([]);
   const [msg,setMsg] = useState('');
 
-  useEffect(()=>{ load(); },[]);
+  useEffect(()=>{ load(); },[]); 
 
   async function load(){
     const token = localStorage.getItem('token');
