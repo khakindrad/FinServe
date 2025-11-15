@@ -1,6 +1,7 @@
 name: Backend CI
 
 on:
+  workflow_dispatch:       # manual trigger
   push:
     branches:
       - master
@@ -16,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Setup .NET 9
@@ -25,13 +26,13 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore Dependencies
-        working-directory: ./backend
+        working-directory: backend
         run: dotnet restore
 
       - name: Build Project
-        working-directory: ./backend
+        working-directory: backend
         run: dotnet build --configuration Release --no-restore
 
       - name: Run Tests (optional)
-        working-directory: ./backend
+        working-directory: backend
         run: dotnet test --no-build --verbosity normal || echo "No tests found"
