@@ -1,0 +1,87 @@
+name: Deploy Backend to EC2 (Single-file)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Show repo top-level files (debug)
+      run: |
+        echo "---- pwd ----"
+        pwd
+        echo "---- ls -la (root) ----"
+        ls -la
+        echo "---- ls -la backend ----"
+        ls -la backend || true
+        echo "---- find backend tree (maxdepth 3) ----"
+        find backend -maxdepth 4 -type f -print || true
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Publish Backend (Single File)
+      run: |
+        # ensure path exists before publishing (debug)
+        echo "Publishing project file:"
+        ls -la ./backend/src/WebAPI/WebAPI.csproj
+        dotnet publish ./backend/src/WebAPI/WebAPI.csproj \
+          -c Release \
+          -o publish \
+          -r linux-x64 \
+          --self-contained true \
+          /p:PublishSingleFile=true \
+          /p:IncludeNativeLibrariesForSelfExtract=true \
+          /p:PublishTrimmed=true \
+          /p:TrimMode=Link \
+          /p:DebugType=None \
+          /p:DebugSymbols=false
+      shell: bash
+
+    - name: Clean old single-file and appsettings on EC2
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo mkdir -p /home/ec2-user/FinServeApi
+          sudo rm -f /home/ec2-user/FinServeApi/WebAPI
+          sudo rm -f /home/ec2-user/FinServeApi/appsettings.json
+
+    - name: Upload Backend single-file executable
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "publish/WebAPI"
+        target: "/home/ec2-user/FinServeApi/"
+
+    - name: Upload appsettings.json
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "./backend/src/WebAPI/appsettings.json"
+        target: "/home/ec2-user/FinServeApi/"
+
+    - name: Ensure executable permission and restart service
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
+          sudo systemctl daemon-reload || true
+          sudo systemctl restart finserve || true
+          sudo systemctl status finserve --no-pager || true
