@@ -110,3 +110,4 @@ docker-compose.yml
 # ======== OS trash ========
 ehthumbs.db
 $RECYCLE.BIN/
+/backend/src/WebAPI/appsettings.json

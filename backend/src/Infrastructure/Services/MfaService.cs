@@ -1,5 +1,4 @@
 using OtpNet;
-using System;
 namespace Infrastructure.Services;
 public class MfaService
 {
