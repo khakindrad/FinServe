@@ -4,6 +4,7 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Services;
+
 public class EmailService
 {
     private readonly IConfiguration _config;

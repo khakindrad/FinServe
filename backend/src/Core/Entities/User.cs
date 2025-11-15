@@ -16,8 +16,8 @@ public class User
     public State? State { get; set; }
     public City? City { get; set; }
     public string? ProfileImageUrl { get; set; }
-    public int RoleId { get; set; }
-    public Role Role { get; set; }
+    // FIXED: EF Core navigation property must be ICollection<>, not List<>
+    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public bool IsActive { get; set; } = true;
     public bool IsApproved { get; set; } = false;
     public bool EmailVerified { get; set; } = false;
@@ -28,8 +28,8 @@ public class User
     public int FailedLoginCount { get; set; } = 0;
     public System.DateTime? LockoutEndAt { get; set; }
     public bool MfaEnabled { get; set; } = false;
-    public string MfaSecret { get; set; }
-    public string DeviceTokensJson { get; set; }
+    public string? MfaSecret { get; set; }
+    public string? DeviceTokensJson { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }

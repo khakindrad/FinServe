@@ -15,7 +15,9 @@ public class AppDbContext : DbContext
     public DbSet<Country> Countries { get; set; } = null!;
     public DbSet<State> States { get; set; } = null!;
     public DbSet<City> Cities { get; set; } = null!;
-
+    public DbSet<MenuMaster> MenuMaster { get; set; } = null!;
+    public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
+    public DbSet<UserRole> UserRoles { get; set; } = null!;
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -35,7 +37,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<User>(b => {
             b.HasKey(u => u.Id);
             b.Property(u => u.Email).IsRequired().HasMaxLength(200);
-            b.HasOne(u => u.Role).WithMany().HasForeignKey(u => u.RoleId).OnDelete(DeleteBehavior.Restrict);
+            //b.HasOne(u => u.UserRoles).WithMany().HasForeignKey(u => u.Id).OnDelete(DeleteBehavior.Restrict)
+            ;
 
             // Seed admin user
             b.HasData(new User
@@ -44,7 +47,7 @@ public class AppDbContext : DbContext
                 Email = "admin@finserve.com",
                 Mobile = "9999999999",
                 FirstName = "Platform Admin",
-                RoleId = 1,
+                //UserRoles = 1,
                 IsActive = true,
                 IsApproved = true,
                 EmailVerified = true,
@@ -133,5 +136,35 @@ public class AppDbContext : DbContext
             new City { Id = 3, Name = "Ahmedabad", StateId = 2 },
             new City { Id = 4, Name = "San Francisco", StateId = 3 }
         );
+
+        modelBuilder.Entity<UserRole>()
+    .HasKey(ur => ur.UserRoleId);
+
+        modelBuilder.Entity<UserRole>()
+            .HasOne(ur => ur.User)
+            .WithMany(u => u.UserRoles)
+            .HasForeignKey(ur => ur.UserId);
+
+        //modelBuilder.Entity<UserRole>()
+        //    .HasOne(ur => ur.Role)
+        //    .WithMany(r => r.UserRoles)
+        //    .HasForeignKey(ur => ur.RoleId);
+
+        modelBuilder.Entity<RoleMenu>()
+            .HasKey(rm => rm.RoleMenuId);
+
+        modelBuilder.Entity<MenuMaster>()
+            .HasKey(m => m.MenuId);
+
+        modelBuilder.Entity<MenuMaster>()
+            .HasMany(m => m.Children)
+            .WithOne()
+            .HasForeignKey(m => m.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<RoleMenu>()
+        .HasOne(rm => rm.Role)
+        .WithMany(r => r.RoleMenus)
+        .HasForeignKey(rm => rm.RoleId);
     }
 }
