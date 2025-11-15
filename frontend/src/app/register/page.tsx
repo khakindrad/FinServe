@@ -16,7 +16,7 @@ export default function Register() {
       body: JSON.stringify({ email, password, fullName, mobile })
     });
     const data = await res.json();
-    if(res.ok) setMsg('Registered. Check email for verification and wait admin approval.');
+    if(res.ok) setMsg('Registered. Check email for verification and wait admin approval.'); 
     else setMsg(data?.message || 'Registration failed');
   }
 
