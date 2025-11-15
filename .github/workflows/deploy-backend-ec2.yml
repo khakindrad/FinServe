@@ -13,20 +13,32 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # ------------------------
+      # 1. Checkout repository
+      # ------------------------
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK (for building on runner if you want)
+      # ------------------------
+      # 2. Setup .NET 9 SDK
+      # ------------------------
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Publish Self-Contained Build
+      # ------------------------
+      # 3. Publish self-contained backend
+      # ------------------------
+      - name: Publish Backend (Self-Contained Linux)
         run: |
           PROJECT_DIR="backend/src/WebAPI"
           OUT_DIR="backend/publish"
-          echo "Publishing $PROJECT_DIR -> $OUT_DIR"
+
+          echo "Restoring..."
           dotnet restore "$PROJECT_DIR"
+
+          echo "Publishing self-contained build..."
           dotnet publish "$PROJECT_DIR" \
             -c Release \
             -r linux-x64 \
@@ -34,33 +46,34 @@ jobs:
             /p:PublishSingleFile=true \
             /p:PublishTrimmed=false \
             -o "$OUT_DIR"
+
+          echo "Publish output:"
+          ls -la "$OUT_DIR"
         shell: bash
 
-      - name: Show publish files
-        run: ls -la backend/publish || true
+      # ------------------------
+      # 4. Prepare EC2 directory variable
+      # ------------------------
+      - name: Set EC2 Target Directory
+        run: |
+          if [ -z "${{ secrets.EC2_TARGET_DIR }}" ]; then
+            echo "EC2_DIR=/home/ec2-user/FinServeApi" >> $GITHUB_ENV
+          else
+            echo "EC2_DIR=${{ secrets.EC2_TARGET_DIR }}" >> $GITHUB_ENV
+          fi
 
-      - name: Copy files to EC2 (SCP)
+      # ------------------------
+      # 5. Upload published files to EC2 via SCP
+      # ------------------------
+      - name: Copy Backend to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # Upload entire publish folder contents to target dir:
           source: "backend/publish/*"
-          target: ${{ secrets.EC2_TARGET_DIR | '/home/ec2-user/FinServeApi' }}
+          target: ${{ env.EC2_DIR }}
 
-      - name: Ensure executable permission and restart service on EC2
-        uses: appleboy/ssh-action@v1.2.1
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            TARGET="${{ secrets.EC2_TARGET_DIR || '/home/ec2-user/FinServeApi' }}"
-            echo "Setting execute permission for files in $TARGET"
-            sudo chmod +x "$TARGET"/* || true
-            # Ensure service file name = finserve (or change below to your service)
-            echo "Restarting finserve service"
-            sudo systemctl daemon-reload || true
-            sudo systemctl restart finserve
-            sudo systemctl status finserve --no-pager
+      # ------------------------
+      # 6. SSH into EC2 → chmod + restart service
+      # ------
