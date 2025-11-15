@@ -1,13 +1,8 @@
 name: Backend CI
 
 on:
-  workflow_dispatch:       # manual trigger
+  workflow_dispatch:
   push:
-    branches:
-      - master
-      - dev
-      - feature/*
-  pull_request:
     branches:
       - master
       - dev
@@ -17,22 +12,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Setup .NET 9 SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore dependencies
+      - name: Restore Dependencies
         working-directory: backend
         run: dotnet restore
 
-      - name: Build project
+      - name: Publish Project
         working-directory: backend
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet publish -c Release -o publish
 
-      - name: Run tests (optional)
-        working-directory: backend
-        run: dotnet test --no-build --verbosity normal || echo "No tests found"
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-build
+          path: backend/publish
