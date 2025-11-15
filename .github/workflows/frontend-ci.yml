@@ -2,29 +2,31 @@ name: Frontend CI
 
 on:
   push:
-    branches: ["master"]
+    branches:
+      - master
   pull_request:
-    branches: ["master"]
+    branches:
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Setup Node
-      uses: actions/setup-node@v3
-      with:
-        node-version: "18"
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
 
-    - name: Install dependencies
-      run: |
-        cd frontend
-        npm install
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
 
-    - name: Build frontend (Next.js)
-      run: |
-        cd frontend
-        npm run build
+      - name: Build project
+        run: |
+          cd frontend
+          npm run build
