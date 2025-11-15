@@ -47,7 +47,7 @@ public class UserController : ControllerBase
             StateName = user.State?.Name,
             CityId = user.CityId,
             CityName = user.City?.Name,
-            RoleName = user.Role.Name,
+            //RoleName = user.UserRoles.Name,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
         };

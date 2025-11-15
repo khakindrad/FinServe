@@ -1,6 +1,0 @@
-"scripts": {
-  "start": "vite",
-  "build": "vite build",
-  "android": "npx cap open android",
-  "ios": "npx cap open ios"
-}

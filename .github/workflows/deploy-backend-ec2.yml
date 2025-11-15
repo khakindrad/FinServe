@@ -1,0 +1,97 @@
+name: Deploy Backend to EC2 (Single-file, safe deploy)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Debug list repo (optional)
+      run: |
+        echo "PWD: $(pwd)"
+        ls -la
+        echo "backend tree (3 levels):"
+        find backend -maxdepth 4 -print || true
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Publish Backend (Single-file)
+      run: |
+        # verify project exists (will fail with helpful error if not)
+        echo "Listing project path:"
+        ls -la ./backend/src/WebAPI/WebAPI.csproj
+        echo "Publishing..."
+        dotnet publish ./backend/src/WebAPI/WebAPI.csproj \
+          -c Release \
+          -o publish \
+          -r linux-x64 \
+          --self-contained true \
+          /p:PublishSingleFile=true \
+          /p:IncludeNativeLibrariesForSelfExtract=true \
+          /p:PublishTrimmed=true \
+          /p:TrimMode=Link \
+          /p:DebugType=None \
+          /p:DebugSymbols=false
+        echo "Publish done. publish/ contents:"
+        ls -la publish || true
+
+    - name: Create tarball of publish contents (no containing folder)
+      run: |
+        # create tar of the CONTENTS of publish dir, so extraction will put files directly into target
+        cd publish
+        tar -czf ../publish.tar.gz .
+        cd ..
+        echo "Created publish.tar.gz with size:"
+        ls -lh publish.tar.gz
+
+    - name: Upload tarball to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        source: "publish.tar.gz"
+        target: "/home/ec2-user/"
+
+    - name: Extract on EC2 into FinServeApi (overwrite only files) and cleanup
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          # ensure folder exists
+          sudo mkdir -p /home/ec2-user/FinServeApi
+          # extract tarball into the folder (tar in place)
+          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi
+          # set exec permission on single-file executable (if exists)
+          sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
+          # remove tar after extraction
+          sudo rm -f /home/ec2-user/publish.tar.gz
+          # list final folder for debug
+          echo "Final /home/ec2-user/FinServeApi contents:"
+          ls -la /home/ec2-user/FinServeApi | sed -n '1,200p'
+
+    - name: Restart Backend service
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo systemctl daemon-reload || true
+          sudo systemctl restart finserve || true
+          sudo systemctl status finserve --no-pager || true
+
+    - name: Cleanup local publish tar
+      run: |
+        rm -f publish.tar.gz

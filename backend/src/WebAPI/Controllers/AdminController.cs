@@ -1,3 +1,4 @@
+using Application.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -17,31 +18,43 @@ public class AdminController : ControllerBase
     private readonly AppDbContext _db;
     private readonly EmailService _email;
     private readonly ILogger<AdminController> _logger;
-    public AdminController(IUserRepository users, AppDbContext db, EmailService email, ILogger<AdminController> logger)
+    private readonly IUserRoleService _userRoleService;
+    public AdminController(IUserRepository users, AppDbContext db, EmailService email, ILogger<AdminController> logger
+        , IUserRoleService userRoleService)
     {
         _users = users;
         _db = db;
         _email = email;
         _logger = logger;
+        _userRoleService = userRoleService;
     }
 
     [HttpGet("pending-users")]
     public async Task<IActionResult> GetPending()
     {
         var items = await _users.GetPendingApprovalsAsync();
-        return Ok(items.Select(u => new { u.Id, u.Email, u.FullName, role = u.Role?.Name }));
+        return Ok(items.Select(u => new { u.Id, u.Email, u.FullName, role = u.UserRoles?.ToList()}));
     }
 
-    [HttpPut("assign-role/{userId}/{roleId}")]
-    public async Task<IActionResult> AssignRole(int userId, int roleId)
+    [HttpGet("roles")]
+    public async Task<IActionResult> GetAllRoles()
     {
-        var user = await _users.GetByIdAsync(userId);
-        if (user == null) return NotFound();
-        user.RoleId = roleId;
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
-        return Ok(new { message = "Role assigned" });
+        return Ok(await _userRoleService.GetAllRolesAsync());
     }
+
+    [HttpGet("user/{userId}")]
+    public async Task<IActionResult> GetUserRoles(int userId)
+    {
+        return Ok(await _userRoleService.GetUserRolesAsync(userId));
+    }
+
+    [HttpPost("assign")]
+    public async Task<IActionResult> AssignRoles([FromBody] AssignRoleDto dto)
+    {
+        await _userRoleService.AssignRolesAsync(dto.UserId, dto.RoleIds);
+        return Ok(new { message = "Roles assigned successfully" });
+    }
+
     /// <summary>
     /// Unlock a user account (clear lockout and reset failed attempts).
     /// Only Admin can call.

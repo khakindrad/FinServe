@@ -45,7 +45,8 @@ public class AuthController : ControllerBase
         var existing = await _users.GetByEmailAsync(dto.Email);
         if (existing != null) return BadRequest("Email exists");
 
-        var user = new User { Email = dto.Email, Mobile = dto.Mobile, FirstName = dto.FullName ?? dto.Email, RoleId = 5, IsActive = true, IsApproved = false };
+        var user = new User { Email = dto.Email, Mobile = dto.Mobile, FirstName = dto.FullName ?? dto.Email, 
+            /*RoleId = 5,*/ IsActive = true, IsApproved = false };
         user.PasswordHash = HashPassword(dto.Password);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
@@ -65,7 +66,8 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Registered. Verify email & mobile and wait for admin approval.", userId = user.Id });
     }
 
-    [HttpPost("verify-email")] public async Task<IActionResult> VerifyEmail([FromBody] dynamic body) 
+    [HttpPost("verify-email")] 
+    public async Task<IActionResult> VerifyEmail([FromBody] dynamic body) 
     { 
         int userId = (int)body.userId; 
         var user = await _users.GetByIdAsync(userId); 
@@ -99,8 +101,6 @@ public class AuthController : ControllerBase
         if (!user.EmailVerified || !user.MobileVerified) return Forbid("Email and mobile must be verified");
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow) return Forbid("Account locked");
 
-        //var password = HashPassword("Admin@FinServe123!");
-
         if (!VerifyHashedPassword(user.PasswordHash, dto.Password))
         {
             user.FailedLoginCount++;
@@ -124,7 +124,9 @@ public class AuthController : ControllerBase
         var accessToken = GenerateJwt(user);
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var refresh = await _rtService.CreateRefreshTokenAsync(user.Id, ip, days: 30);
-        return Ok(new { accessToken, refreshToken = refresh.Token, user = new { user.Id, user.Email, user.FullName, role = user.Role?.Name } });
+
+        return Ok(new { accessToken, refreshToken = refresh.Token, user =
+            new { user.Id, user.Email, user.FullName, role = user.UserRoles } });
     }
 
     [HttpPost("refresh")] 
@@ -201,9 +203,18 @@ public class AuthController : ControllerBase
     {
         var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "ReplaceWithStrongKey");
         var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
-        var claims = new[] 
+
+        // 3. Get roles
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+
+        var claims = new List<Claim>
         { 
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), new Claim(ClaimTypes.Email, user.Email), new Claim(ClaimTypes.Name, user.FullName), new Claim(ClaimTypes.Role, user.Role?.Name ?? "Customer") };
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.FullName), 
+            //new Claim(ClaimTypes.Role, user.UserRoles?.Name ?? "Customer") 
+        };
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
         var token = new JwtSecurityToken(issuer: _config["Jwt:Issuer"], audience: _config["Jwt:Audience"], claims: claims, expires: DateTime.UtcNow.AddMinutes(_config.GetValue("Jwt:ExpiryMinutes", 15)), signingCredentials: creds);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

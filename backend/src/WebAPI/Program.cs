@@ -13,12 +13,14 @@ internal sealed class Program
     {
         try
         {
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args); 
             Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).Enrich.FromLogContext().CreateLogger();
             builder.Host.UseSerilog();
 
             var conn = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new Exception("Missing DefaultConnection");
             builder.Services.AddDbContext<AppDbContext>(opt => opt.UseMySql(conn, ServerVersion.AutoDetect(conn)));
+
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<RefreshTokenService>();
@@ -30,6 +32,9 @@ internal sealed class Program
             // Infrastructure services
             builder.Services.AddScoped<PasswordExpiryNotificationService>();
             builder.Services.AddHostedService<PasswordExpiryHostedService>();
+
+            builder.Services.AddScoped<IUserRoleService, UserRoleService>();
+            builder.Services.AddScoped<IMenuService, MenuService>();
 
             builder.Services.AddCors(options =>
             {
