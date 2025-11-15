@@ -1,23 +1,19 @@
-name: Frontend CI
+name: Frontend CI (artifact)
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - master
       - dev
+      - master
       - feature/*
-  pull_request:
-    branches:
-      - master
-      - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -31,11 +27,11 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Build & Export (Next.js)
+      - name: Build & Export Next.js
         working-directory: frontend
         run: |
           npm run build
-          npm run export
+          npm run export   # creates frontend/out
 
       - name: Upload Frontend Artifact
         uses: actions/upload-artifact@v4
