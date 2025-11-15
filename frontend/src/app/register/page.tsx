@@ -1,36 +1,23 @@
-'use client'
-import { useState } from 'react';
+import RegisterForm from "@/components/forms/RegisterForm";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
-export default function Register() {
-  const [email,setEmail]=useState('');
-  const [password,setPassword]=useState('');
-  const [fullName,setFullName]=useState('');
-  const [mobile,setMobile]=useState('');
-  const [msg,setMsg]=useState('');
-
-  async function submit(e:any){
-    e.preventDefault();
-    const res = await fetch('/api/proxy/auth/register', {
-      method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ email, password, fullName, mobile })
-    });
-    const data = await res.json();
-    if(res.ok) setMsg('Registered. Check email for verification and wait admin approval.'); 
-    else setMsg(data?.message || 'Registration failed');
-  }
-
+export default function RegisterPage() {
   return (
-    <main style={{padding:24}}>
-      <h2>Register</h2>
-      <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:10,width:360}}>
-        <input placeholder='Full name' value={fullName} onChange={e=>setFullName(e.target.value)} required/>
-        <input placeholder='Email' value={email} onChange={e=>setEmail(e.target.value)} type='email' required/>
-        <input placeholder='Mobile' value={mobile} onChange={e=>setMobile(e.target.value)} />
-        <input placeholder='Password' value={password} onChange={e=>setPassword(e.target.value)} type='password' required/>
-        <button type='submit'>Register</button>
-      </form>
-      <div>{msg}</div>
-    </main>
-  )
+    <div className="min-h-screen flex items-start justify-center px-4 py-10 bg-gradient-to-b from-gray-50 to-white">
+      <Card className="w-full max-w-4xl shadow-xl border rounded-2xl">
+        
+        <CardHeader className="text-center pb-4">
+          <CardTitle className="text-3xl font-bold">Create an Account</CardTitle>
+          <CardDescription className="text-gray-600 mt-2">
+            Register to access your personalized financial dashboard
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="pb-12 md:px-12 px-4">
+          <RegisterForm />
+        </CardContent>
+
+      </Card>
+    </div>
+  );
 }
