@@ -1,0 +1,66 @@
+name: Deploy Backend to EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK (for building on runner if you want)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Publish Self-Contained Build
+        run: |
+          PROJECT_DIR="backend/src/WebAPI"
+          OUT_DIR="backend/publish"
+          echo "Publishing $PROJECT_DIR -> $OUT_DIR"
+          dotnet restore "$PROJECT_DIR"
+          dotnet publish "$PROJECT_DIR" \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            /p:PublishSingleFile=true \
+            /p:PublishTrimmed=false \
+            -o "$OUT_DIR"
+        shell: bash
+
+      - name: Show publish files
+        run: ls -la backend/publish || true
+
+      - name: Copy files to EC2 (SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          # Upload entire publish folder contents to target dir:
+          source: "backend/publish/*"
+          target: ${{ secrets.EC2_TARGET_DIR | '/home/ec2-user/FinServeApi' }}
+
+      - name: Ensure executable permission and restart service on EC2
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            TARGET="${{ secrets.EC2_TARGET_DIR || '/home/ec2-user/FinServeApi' }}"
+            echo "Setting execute permission for files in $TARGET"
+            sudo chmod +x "$TARGET"/* || true
+            # Ensure service file name = finserve (or change below to your service)
+            echo "Restarting finserve service"
+            sudo systemctl daemon-reload || true
+            sudo systemctl restart finserve
+            sudo systemctl status finserve --no-pager
