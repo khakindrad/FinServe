@@ -2,7 +2,7 @@ name: Deploy Backend CD
 
 on:
   release:
-    types: [published]   # 🚀 Auto-trigger on GitHub Release
+    types: [published]
 
 jobs:
   deploy:
@@ -47,7 +47,7 @@ jobs:
         echo "Publish done. publish/ contents:"
         ls -la publish || true
 
-    - name: Create tarball of publish contents (no containing folder)
+    - name: Create tarball of publish contents
       run: |
         cd publish
         tar --exclude='appsettings*.json' -czf ../publish.tar.gz .
@@ -65,7 +65,7 @@ jobs:
         source: "publish.tar.gz"
         target: "/home/ec2-user/"
 
-    - name: Extract on EC2 into FinServeApi (overwrite only files) and cleanup
+    - name: Extract on EC2 and restart
       uses: appleboy/ssh-action@v1.2.0
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -73,36 +73,54 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           sudo mkdir -p /home/ec2-user/FinServeApi
-
-          echo "🔴 Stopping backend service so WebAPI is NOT locked..."
+          echo "🔴 Stopping backend service to avoid file lock..."
           sudo systemctl stop finserve || true
 
-          echo "Extracting publish.tar.gz..."
+          echo "Extracting new build..."
           sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
 
-          echo "Preserving existing appsettings.json (not overwritten)."
-
           sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
-
           sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
           sudo chmod -R 755 /home/ec2-user/FinServeApi
 
           sudo rm -f /home/ec2-user/publish.tar.gz
 
-          echo "Final deployment folder:"
-          ls -la /home/ec2-user/FinServeApi | sed -n '1,200p'
-
-    - name: Restart Backend service
-      uses: appleboy/ssh-action@v1.2.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          sudo systemctl daemon-reload || true
-          sudo systemctl restart finserve || true
-          sudo systemctl status finserve --no-pager || true
+          echo "Restarting service..."
+          sudo systemctl daemon-reload
+          sudo systemctl restart finserve
+          sudo systemctl status finserve --no-pager
 
     - name: Cleanup local publish tar
-      run: |
-        rm -f publish.tar.gz
+      run: rm -f publish.tar.gz
+
+    - name: Send Email (Success)
+      if: success()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ secrets.SMTP_HOST }}
+        server_port: ${{ secrets.SMTP_PORT }}
+        username: ${{ secrets.SMTP_USERNAME }}
+        password: ${{ secrets.SMTP_PASSWORD }}
+        subject: "🚀 Backend Deployment Successful – ${{ github.ref_name }}"
+        to: ${{ secrets.EMAIL_TO }}
+        from: ${{ secrets.SMTP_USERNAME }}
+        body: |
+          Backend deployment completed successfully.
+          Tag: ${{ github.ref_name }}
+          Logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    - name: Send Email (Failure)
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: ${{ secrets.SMTP_HOST }}
+        server_port: ${{ secrets.SMTP_PORT }}
+        username: ${{ secrets.SMTP_USERNAME }}
+        password: ${{ secrets.SMTP_PASSWORD }}
+        subject: "❌ Backend Deployment FAILED – ${{ github.ref_name }}"
+        to: ${{ secrets.EMAIL_TO }}
+        from: ${{ secrets.SMTP_USERNAME }}
+        body: |
+          Backend deployment FAILED.
+          Tag: ${{ github.ref_name }}
+          Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
