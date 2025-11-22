@@ -1,4 +1,4 @@
-name: Create Backend Release
+name: Backend Release
 
 on:
   workflow_dispatch:
@@ -8,8 +8,11 @@ on:
         required: true
 
   push:
+    branches:
+      - Dev
+      - master
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build:
@@ -19,31 +22,31 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
-      - name: Build Backend for Linux
+      - name: Publish Backend for Linux
         run: |
           dotnet publish FinServe/backend/src/WebAPI/WebAPI.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
-            -o ./release
+            -o release
 
-      - name: Zip Release Files
+      - name: Zip Published Files
         run: |
           cd release
           zip -r ../backend-release.zip .
 
-      - name: Upload Release Artifact
+      - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-release
           path: backend-release.zip
 
-  create_github_release:
+  create_release:
     needs: build
     runs-on: ubuntu-latest
 
@@ -54,7 +57,7 @@ jobs:
           name: backend-release
           path: .
 
-      - name: Create Release on GitHub
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.version || github.ref_name }}
