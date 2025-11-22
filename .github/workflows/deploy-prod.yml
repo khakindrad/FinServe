@@ -6,36 +6,38 @@ on:
 jobs:
   approval:
     runs-on: ubuntu-latest
+
     steps:
       - name: Require Manual Approval
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: your-github-username
+          approvers: khakindrad         # CHANGE THIS TO YOUR GITHUB USERNAME
           minimum-approvals: 1
-          issue-title: "Production Release Approval Required"
-          issue-body: "Approve to deploy the latest backend release to production."
+          issue-title: "Approval Required: Production Deployment"
+          issue-body: "Approve this request to deploy backend to production."
 
   deploy:
     needs: approval
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download latest GitHub Release artifact
+      - name: Download Latest Release
         uses: robinraju/release-downloader@v1
         with:
           latest: true
+          repository: ${{ github.repository }}
           filename: "backend-release.zip"
 
-      - name: Unzip artifact
+      - name: Unzip Build
         run: unzip backend-release.zip -d ./deploy
 
-      - name: Copy Backend to EC2 (Skip appsettings.json)
+      - name: Copy Build to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.PROD_EC2_HOST }}
-          username: ${{ secrets.PROD_EC2_USERNAME }}
-          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           source: "./deploy/*"
           target: "/home/ec2-user/FinServeApi/"
           overwrite: true
@@ -45,12 +47,12 @@ jobs:
             appsettings.Development.json
             appsettings.Production.json
 
-      - name: Restart API service on EC2
+      - name: Restart API Service
         uses: appleboy/ssh-action@v0.1.8
         with:
-          host: ${{ secrets.PROD_EC2_HOST }}
-          username: ${{ secrets.PROD_EC2_USERNAME }}
-          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
             sudo systemctl restart finserveapi.service
