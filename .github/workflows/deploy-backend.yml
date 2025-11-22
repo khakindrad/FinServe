@@ -73,6 +73,9 @@ jobs:
         script: |
           sudo mkdir -p /home/ec2-user/FinServeApi
 
+          echo "🔴 Stopping backend service so WebAPI is NOT locked..."
+          sudo systemctl stop finserve || true     # <-- REQUIRED FIX
+
           echo "Extracting publish.tar.gz..."
           sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
 
@@ -80,7 +83,6 @@ jobs:
 
           sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
 
-          # 🔥 PERMANENT FIX → ALWAYS RESET OWNERSHIP + PERMISSIONS
           sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
           sudo chmod -R 755 /home/ec2-user/FinServeApi
 
