@@ -15,22 +15,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
+      # Step 4: Build frontend (generates frontend/out automatically)
       - name: Build frontend
         working-directory: frontend
-        run: npm run build && npm run export
+        run: npm run build
 
+      # Step 5: Deploy to S3
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@v0.5.1
         env:
@@ -40,6 +45,7 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: "frontend/out"
 
+      # Step 6: Invalidate CloudFront cache (only for master branch)
       - name: Invalidate CloudFront (only for master)
         if: github.ref == 'refs/heads/master'
         uses: chetan/invalidate-cloudfront-action@v1
