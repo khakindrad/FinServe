@@ -19,31 +19,31 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish Backend (Self-Contained Linux)
+      - name: Build Backend for Linux
         run: |
-          dotnet publish ./FinServe/backend/src/WebAPI/WebAPI.csproj \
+          dotnet publish FinServe/backend/src/WebAPI/WebAPI.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
             -o ./release
 
-      - name: Zip Artifact
+      - name: Zip Release Files
         run: |
           cd release
           zip -r ../backend-release.zip .
 
-      - name: Upload Artifact
+      - name: Upload Release Artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-release
           path: backend-release.zip
 
-  create_release:
+  create_github_release:
     needs: build
     runs-on: ubuntu-latest
 
@@ -54,7 +54,7 @@ jobs:
           name: backend-release
           path: .
 
-      - name: Create GitHub Release
+      - name: Create Release on GitHub
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.event.inputs.version || github.ref_name }}
