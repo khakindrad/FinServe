@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - master      # Only deploy when pushing to master
+      - dev
+      - master
 
 jobs:
   deploy:
@@ -39,7 +40,7 @@ jobs:
           SOURCE_DIR: "frontend/out"
 
       - name: Invalidate CloudFront Cache
-        uses: chetan/invalidate-cloudfront-action@v1
+        uses: aws-actions/cloudfront-invalidate-cache@v2
         with:
           distribution-id: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
           paths: "/*"
