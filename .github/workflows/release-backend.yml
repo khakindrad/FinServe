@@ -1,0 +1,64 @@
+name: Create Backend Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. v1.0.0)"
+        required: true
+
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish Backend (Self-Contained Linux)
+        run: |
+          dotnet publish ./FinServe/backend/src/WebAPI/WebAPI.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -o ./release
+
+      - name: Zip Artifact
+        run: |
+          cd release
+          zip -r ../backend-release.zip .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-release
+          path: backend-release.zip
+
+  create_release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-release
+          path: .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: "Backend Release ${{ github.event.inputs.version || github.ref_name }}"
+          files: backend-release.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
