@@ -3,7 +3,7 @@ import { getAccessToken, setAccessToken, clearAccessToken } from "./auth";
 import { refreshAccessToken } from "./refreshClient";
 import { normalizeHeaders } from "./utils";
 
-export const API_BASE_URL = "http://3.236.232.96:5005/api";
+export const API_BASE_URL = "https://tzrhqvey9d.execute-api.us-east-1.amazonaws.com/prod/api";
 
 // -----------------------------
 // RAW REQUEST (no retry logic)
