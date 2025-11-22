@@ -1,17 +1,24 @@
-export function saveAuthTokens(token: string, refreshToken: string) {
-  localStorage.setItem("token", token);
-  localStorage.setItem("refreshToken", refreshToken);
+// lib/auth.ts
+// Access token stored ONLY in memory (clearest, safest)
+let accessToken: string | null = null;
+
+export function setAccessToken(token: string | null) {
+  accessToken = token;
 }
 
-export function getAccessToken() {
-  return localStorage.getItem("token");
+export function getAccessToken(): string | null {
+  return accessToken;
 }
 
-export function getRefreshToken() {
-  return localStorage.getItem("refreshToken");
+export function clearAccessToken() {
+  accessToken = null;
 }
 
-export function logoutUser() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
+// Logout on client: clear memory token and call backend logout endpoint elsewhere
+export function clientLogoutCleanup() {
+  clearAccessToken();
+  // cannot clear HttpOnly cookie from JS - backend must clear it via /auth/logout
+}
+export function hasAccessToken() {
+  return accessToken !== null;
 }

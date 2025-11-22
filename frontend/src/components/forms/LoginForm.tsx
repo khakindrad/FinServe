@@ -5,101 +5,117 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-import { api } from "@/lib/api";
-import { saveAuthTokens } from "@/lib/auth";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+
+import AppAlert from "@/components/common/AppAlert";
+import { useFormMessages } from "@/hooks/useFormMessages";
+import { useLogin } from "@/hooks/useLogin";
+import { validateField } from "@/lib/validators";
+import { patterns } from "@/lib/patterns";
+
 export default function LoginForm() {
-  const router = useRouter();
+  const { errorMsg, setErrorMsg, successMsg, setSuccessMsg } = useFormMessages();
+  const { login, loading } = useLogin(setErrorMsg, setSuccessMsg);
+
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(""); // 🔴 Show inline error message
-  const { setUser } = useAuth();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  async function handleLogin(e: any) {
+  function updateField(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  function handleSubmit(e: any) {
     e.preventDefault();
-    setLoading(true);
-    setErrorMsg(""); // clear previous error
+    setErrorMsg("");
+    setErrors({});
 
-    try {
-      const email = (document.getElementById("email") as HTMLInputElement).value;
-      const password = (document.getElementById("password") as HTMLInputElement).value;
-      const DeviceInfo=null;
-      const res = await api.login({ email, password });
+    let newErrors: any = {};
+    const validations = [
+      { field: "email", label: "Email", pattern: patterns.email },
+      { field: "password", label: "Password", pattern: patterns.strongPassword },
+    ];
 
-      // save tokens
-      saveAuthTokens(res.token, res.refreshToken);
-      // save user globally
-      setUser(res.user);
-      // go to dashboard
-      router.push("/User/dashboard");
+    validations.forEach(({ field, label, pattern }) => {
+      const result = validateField(form[field], label, pattern);
+      if (result) newErrors[field] = result;
+    });
 
-    } catch (err: any) {
-      // 🔴 Show error message inside form
-      setErrorMsg(err.message || "Invalid email or password");
+    if (Object.keys(newErrors).length > 0) {
+       setErrors(newErrors);
+      if (Object.keys(newErrors).length === 1) {
+        setErrorMsg(Object.values(newErrors)[0] as string);
+      } else {
+        setErrorMsg(""); // only inline errors
+      }
+      return;
     }
-
-    setLoading(false);
+    login(form.email, form.password);
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleLogin}>
-      
-      {/* 🔴 Error Message */}
-      {errorMsg && (
-        <p className="text-red-600 text-sm font-medium bg-red-50 border border-red-200 p-2 rounded-md">
-          {errorMsg}
-        </p>
-      )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {errorMsg && <AppAlert type="error" message={errorMsg} />}
+      {successMsg && <AppAlert type="success" message={successMsg} />}
 
-      {/* Email */}
+      {/* EMAIL */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Email</label>
         <div className="relative">
           <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-          <Input id="email" type="email" placeholder="you@example.com" className="pl-10" required />
+          <Input
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={(e) => updateField("email", e.target.value)}
+            disabled={loading}
+            className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
+          />
         </div>
+        {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
       </div>
 
-      {/* Password */}
+      {/* PASSWORD */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Password</label>
-
         <div className="relative">
           <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
 
           <Input
-            id="password"
             type={showPassword ? "text" : "password"}
             placeholder="••••••••"
-            className="pl-10 pr-12"
-            required
+            value={form.password}
+            onChange={(e) => updateField("password", e.target.value)}
+            disabled={loading}
+            className={`pl-10 pr-12 ${errors.password ? "border-red-500" : ""}`}
           />
 
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-3 text-gray-500"
           >
-            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            {showPassword ? <EyeOff /> : <Eye />}
           </button>
         </div>
 
-        <div className="w-full flex justify-start">
-          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline font-medium">
+        {errors.password && (
+          <p className="text-xs text-red-600">{errors.password}</p>
+        )}
+
+        <div className="text-left">
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
             Forgot password?
           </Link>
         </div>
       </div>
 
-      {/* Login */}
-      <Button type="submit" className="w-full h-11 text-lg" disabled={loading}>
+      <Button type="submit" disabled={loading} className="w-full h-11 text-lg">
         {loading ? "Logging in..." : "Login"}
       </Button>
 
       <div className="text-center text-sm text-gray-500">
         Don’t have an account?{" "}
-        <Link href="/register" className="text-blue-600 font-medium hover:underline">
+        <Link href="/register" className="text-blue-600 hover:underline">
           Create one
         </Link>
       </div>
