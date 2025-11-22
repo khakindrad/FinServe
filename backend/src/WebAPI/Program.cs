@@ -75,7 +75,12 @@ internal sealed class Program
 
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowLocal", b => b.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:3000"));
+                options
+                .AddPolicy("AllowLocal", b => b
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials()
+                .WithOrigins("*"));
             });
 
             builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
@@ -122,6 +127,7 @@ internal sealed class Program
 
             app.UseSerilogRequestLogging();
             app.UseCors("AllowLocal");
+            app.UseCors("AllowLocalhost");
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
