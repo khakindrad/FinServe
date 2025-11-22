@@ -8,7 +8,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
           <CardDescription className="text-gray-600 mt-2">
-            Login to access your FinServe dashboard
+            Login to access your FinServe dashboard 
           </CardDescription>
         </CardHeader>
         <CardContent>
