@@ -1,66 +1,107 @@
-name: Deploy Backend to Elastic Beanstalk
+name: Deploy Backend CD
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - dev
-      - master
-
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  EB_APP: ${{ secrets.EB_APP_NAME }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '9.0.x'
+    - name: Debug list repo (optional)
+      run: |
+        echo "PWD: $(pwd)"
+        ls -la
+        echo "backend tree (3 levels):"
+        find backend -maxdepth 4 -print || true
 
-      - name: Publish .NET backend
-        working-directory: backend
-        run: |
-          dotnet restore
-          dotnet publish -c Release -o publish
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
 
-      - name: Zip publish folder
-        working-directory: backend
-        run: |
-          cd publish
-          zip -r ../app.zip .
-          cd ..
+    - name: Publish Backend (Single-file)
+      run: |
+        echo "Publishing..."
+        dotnet publish ./backend/src/WebAPI/WebAPI.csproj \
+          -c Release \
+          -o publish \
+          -r linux-x64 \
+          --self-contained true \
+          /p:PublishSingleFile=true \
+          /p:IncludeNativeLibrariesForSelfExtract=true \
+          /p:PublishTrimmed=false \
+          /p:TrimMode=Link \
+          /p:DebugType=None \
+          /p:DebugSymbols=false
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+        echo "Removing appsettings from publish folder..."
+        rm -f publish/appsettings.json || true
+        rm -f publish/appsettings.Development.json || true
+        rm -f publish/appsettings.Production.json || true
 
-      - name: Deploy to Elastic Beanstalk
-        run: |
-          if [ "${GITHUB_REF##*/}" = "master" ]; then
-            EB_ENV="${{ secrets.EB_ENV_PROD }}"
-          else
-            EB_ENV="${{ secrets.EB_ENV_DEV }}"
-          fi
+        echo "Publish done. publish/ contents:"
+        ls -la publish || true
 
-          echo "Deploying to: $EB_ENV"
+    - name: Create tarball of publish contents (no containing folder)
+      run: |
+        cd publish
+        tar --exclude='appsettings*.json' -czf ../publish.tar.gz .
+        cd ..
+        echo "Created publish.tar.gz with size:"
+        ls -lh publish.tar.gz
 
-          aws s3 cp backend/app.zip s3://$EB_APP-deployments-$AWS_REGION/app-${GITHUB_SHA}.zip
+    - name: Upload tarball to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: 22
+        source: "publish.tar.gz"
+        target: "/home/ec2-user/"
 
-          aws elasticbeanstalk create-application-version \
-            --application-name "$EB_APP" \
-            --version-label "gh-${GITHUB_SHA}" \
-            --source-bundle S3Bucket="$EB_APP-deployments-$AWS_REGION",S3Key="app-${GITHUB_SHA}.zip"
+    - name: Extract on EC2 into FinServeApi (overwrite only files) and cleanup
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo mkdir -p /home/ec2-user/FinServeApi
 
-          aws elasticbeanstalk update-environment \
-            --environment-name "$EB_ENV" \
-            --version-label "gh-${GITHUB_SHA}"
+          echo "🔴 Stopping backend service so WebAPI is NOT locked..."
+          sudo systemctl stop finserve || true     # <-- REQUIRED FIX
+
+          echo "Extracting publish.tar.gz..."
+          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
+
+          echo "Preserving existing appsettings.json (not overwritten)."
+
+          sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
+
+          sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
+          sudo chmod -R 755 /home/ec2-user/FinServeApi
+
+          sudo rm -f /home/ec2-user/publish.tar.gz
+
+          echo "Final deployment folder:"
+          ls -la /home/ec2-user/FinServeApi | sed -n '1,200p'
+
+    - name: Restart Backend service
+      uses: appleboy/ssh-action@v1.2.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          sudo systemctl daemon-reload || true
+          sudo systemctl restart finserve || true
+          sudo systemctl status finserve --no-pager || true
+
+    - name: Cleanup local publish tar
+      run: |
+        rm -f publish.tar.gz

@@ -1,0 +1,66 @@
+name: Deploy Backend CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - dev
+      - master
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EB_APP: ${{ secrets.EB_APP_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Publish .NET backend
+        working-directory: backend
+        run: |
+          dotnet restore
+          dotnet publish -c Release -o publish
+
+      - name: Zip publish folder
+        working-directory: backend
+        run: |
+          cd publish
+          zip -r ../app.zip .
+          cd ..
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          if [ "${GITHUB_REF##*/}" = "master" ]; then
+            EB_ENV="${{ secrets.EB_ENV_PROD }}"
+          else
+            EB_ENV="${{ secrets.EB_ENV_DEV }}"
+          fi
+
+          echo "Deploying to: $EB_ENV"
+
+          aws s3 cp backend/app.zip s3://$EB_APP-deployments-$AWS_REGION/app-${GITHUB_SHA}.zip
+
+          aws elasticbeanstalk create-application-version \
+            --application-name "$EB_APP" \
+            --version-label "gh-${GITHUB_SHA}" \
+            --source-bundle S3Bucket="$EB_APP-deployments-$AWS_REGION",S3Key="app-${GITHUB_SHA}.zip"
+
+          aws elasticbeanstalk update-environment \
+            --environment-name "$EB_ENV" \
+            --version-label "gh-${GITHUB_SHA}"
