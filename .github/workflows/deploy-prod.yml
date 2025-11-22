@@ -5,32 +5,34 @@ on:
 
 jobs:
   approval:
+    name: Wait For Manual Approval
     runs-on: ubuntu-latest
 
     steps:
-      - name: Require Manual Approval
+      - name: Require Approval Before Prod Deploy
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: khakindrad         # CHANGE THIS TO YOUR GITHUB USERNAME
+          approvers: khakindrad     # <-- CHANGE TO YOUR GITHUB USERNAME
           minimum-approvals: 1
-          issue-title: "Approval Required: Production Deployment"
+          issue-title: "Production Deployment Approval Needed"
           issue-body: "Approve this request to deploy backend to production."
 
   deploy:
-    needs: approval
+    name: Deploy to Production EC2
     runs-on: ubuntu-latest
+    needs: approval
 
     steps:
-      - name: Download Latest Release
+      - name: Download Latest Release Build
         uses: robinraju/release-downloader@v1
         with:
           latest: true
           repository: ${{ github.repository }}
           filename: "backend-release.zip"
 
-      - name: Unzip Build
-        run: unzip backend-release.zip -d ./deploy
+      - name: Unzip Files
+        run: unzip backend-release.zip -d deploy
 
       - name: Copy Build to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -38,7 +40,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "./deploy/*"
+          source: "deploy/*"
           target: "/home/ec2-user/FinServeApi/"
           overwrite: true
           strip_components: 0
@@ -47,7 +49,7 @@ jobs:
             appsettings.Development.json
             appsettings.Production.json
 
-      - name: Restart API Service
+      - name: Restart EC2 API Service
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.EC2_HOST }}
