@@ -1,47 +1,59 @@
-name: Backend Release
+name: Backend Prod Deploy
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: "Release version (e.g. v1.0.0)"
-        required: true
-
-  push:
-    branches:
-      - Dev
-      - master
-    tags:
-      - "v*"
 
 jobs:
-  build:
+  approval:
+    name: Wait For Manual Approval
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v4
+      - name: Require Approval Before Production Deploy
+        uses: trstringer/manual-approval@v1
         with:
-          dotnet-version: "8.0.x"
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: khakindrad
+          minimum-approvals: 1
+          issue-title: "Production Deployment Approval Needed"
+          issue-body: "Approve this request to deploy backend to production."
 
-      - name: Publish Backend for Linux
-        run: |
-          dotnet publish backend/src/WebAPI/WebAPI.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained true \
-            -o release
+  deploy:
+    name: Deploy to EC2 (Production)
+    needs: approval
+    runs-on: ubuntu-latest
 
-      - name: Zip Published Files
-        run: |
-          cd release
-          zip -r ../backend-release.zip .
-
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
+    steps:
+      - name: Download Latest Release
+        uses: robinraju/release-downloader@v1
         with:
-          name: backend-release
-          path: backend-release.zip
+          latest: true
+          repository: ${{ github.repository }}
+          filename: "backend-release.zip"
+
+      - name: Unzip Release Files
+        run: unzip backend-release.zip -d deploy
+
+      - name: Upload Files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/*"
+          target: "/home/ec2-user/FinServeApi/"
+          overwrite: true
+          strip_components: 0
+          excludes: |
+            appsettings.json
+            appsettings.*.json
+
+      - name: Restart API Service
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo systemctl restart finserveapi.service
+            sudo systemctl status finserveapi.service --no-pager
