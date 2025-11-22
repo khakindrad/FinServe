@@ -97,5 +97,13 @@ export const api = {
     request("/Auth/refresh", { 
       method: "POST", 
     }),
+    forgotPassword: () => 
+    request("/Auth/forgot-password", { 
+      method: "POST", 
+    }),
+    register: (payload) => 
+    request("/Auth/register", { 
+      method: "POST", 
+    }),
 };
 
