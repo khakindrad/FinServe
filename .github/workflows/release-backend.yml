@@ -29,7 +29,7 @@ jobs:
 
       - name: Publish Backend for Linux
         run: |
-          dotnet publish FinServe/backend/src/WebAPI/WebAPI.csproj \
+          dotnet publish backend/src/WebAPI/WebAPI.csproj \
             -c Release \
             -r linux-x64 \
             --self-contained true \
@@ -45,23 +45,3 @@ jobs:
         with:
           name: backend-release
           path: backend-release.zip
-
-  create_release:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-release
-          path: .
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.event.inputs.version || github.ref_name }}
-          name: "Backend Release ${{ github.event.inputs.version || github.ref_name }}"
-          files: backend-release.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
