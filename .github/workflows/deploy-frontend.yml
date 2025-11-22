@@ -7,9 +7,6 @@ on:
       - dev
       - master
 
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -29,20 +26,20 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
-        run: npm run build && npm run export
+        run: npm run build
 
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
-          args: --acl public-read --delete
+          args: --delete
+          bucket: ${{ github.ref == 'refs/heads/master' && secrets.FRONTEND_PROD_BUCKET || secrets.FRONTEND_DEV_BUCKET }}
+          source-dir: "frontend/out"
         env:
-          AWS_S3_BUCKET: ${{ github.ref == 'refs/heads/master' && secrets.FRONTEND_PROD_BUCKET || secrets.FRONTEND_DEV_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          SOURCE_DIR: "frontend/out"
 
-      - name: Invalidate CloudFront (only for master)
+      - name: Invalidate CloudFront (only master)
         if: github.ref == 'refs/heads/master'
         uses: chetan/invalidate-cloudfront-action@v1
         with:
