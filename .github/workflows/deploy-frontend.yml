@@ -1,4 +1,4 @@
-name: Deploy Frontend (Production Only)
+name: Deploy Frontend CD
 
 on:
   workflow_dispatch:
