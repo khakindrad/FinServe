@@ -73,15 +73,22 @@ internal sealed class Program
             builder.Services.AddScoped<IUserRoleService, UserRoleService>();
             builder.Services.AddScoped<IMenuService, MenuService>();
 
+            // Read CORS config from appsettings.json
+            var corsSettings = builder.Configuration.GetSection("Cors");
+            var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>();
+            var allowCredentials = corsSettings.GetValue<bool>("AllowCredentials");
+
             builder.Services.AddCors(options =>
             {
-                options
-                .AddPolicy("corsPolicy", b => b
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials()
-                //.WithOrigins("https://localhost:3000", "https://dzrds0cnvm4xr.cloudfront.net/"))
-                );
+                options.AddPolicy("AppCorsPolicy", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)   // Use origins from appsettings.json
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+
+                    if (allowCredentials)
+                        policy.AllowCredentials();        // Only enable if needed
+                });
             });
 
             builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
@@ -127,7 +134,7 @@ internal sealed class Program
             }
 
             app.UseSerilogRequestLogging();
-            app.UseCors("corsPolicy");
+            app.UseCors("AppCorsPolicy");
             app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
