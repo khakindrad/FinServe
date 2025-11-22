@@ -18,7 +18,6 @@ jobs:
           issue-title: "Production Deployment Approval Needed"
           issue-body: "Approve this request to deploy backend to production."
 
-
   deploy:
     name: Deploy to EC2 (Production)
     needs: approval
