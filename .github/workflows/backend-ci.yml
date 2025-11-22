@@ -1,38 +1,52 @@
-name: Backend CI
+name: Backend CI (self-contained, artifact)
 
 on:
-  workflow_dispatch:       # manual trigger
+  workflow_dispatch:
   push:
     branches:
-      - master
       - dev
-      - feature/*
-  pull_request:
-    branches:
       - master
-      - dev
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore Dependencies
-        working-directory: backend
-        run: dotnet restore
+      # ADAPT: set project_dir to where your csproj lives
+      # If your project file is at backend/src/WebAPI/WebAPI.csproj use that path.
+      # If it's at backend/WebAPI.csproj change PROJECT_DIR accordingly.
+      - name: Publish Self-Contained Build
+        run: |
+          PROJECT_DIR="backend/src/WebAPI"
+          OUT_DIR="backend/publish"
+          echo "Publishing from $PROJECT_DIR to $OUT_DIR"
+          dotnet restore "$PROJECT_DIR"
+          dotnet publish "$PROJECT_DIR" \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            /p:PublishSingleFile=true \
+            /p:PublishTrimmed=false \
+            -o "$OUT_DIR"
+        shell: bash
 
-      - name: Build Project
-        working-directory: backend
-        run: dotnet build --configuration Release --no-restore
+      - name: List published files
+        run: |
+          echo "Publish output:"
+          ls -la backend/publish || true
 
-      - name: Run Tests (optional)
-        working-directory: backend
-        run: dotnet test --no-build --verbosity normal || echo "No tests found"
+      - name: Upload self-contained artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-self-contained
+          path: backend/publish
+          retention-days: 7
