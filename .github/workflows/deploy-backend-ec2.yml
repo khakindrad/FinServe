@@ -80,12 +80,12 @@ jobs:
           echo "Preserving existing appsettings.json (not overwritten)."
           # Nothing required here because tar doesn't include appsettings.json
 
-          sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
+          sudo chmod +x /home/ec2-user/FinServeAPINew/WebAPI || true
 
           sudo rm -f /home/ec2-user/publish.tar.gz
 
           echo "Final deployment folder:"
-          ls -la /home/ec2-user/FinServeApi | sed -n '1,200p'
+          ls -la /home/ec2-user/FinServeAPINew | sed -n '1,200p'
 
     - name: Restart Backend service
       uses: appleboy/ssh-action@v1.2.0
