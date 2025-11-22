@@ -1,7 +1,8 @@
 name: Deploy Backend CD
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]   # 🚀 Auto-trigger on GitHub Release
 
 jobs:
   deploy:
@@ -74,7 +75,7 @@ jobs:
           sudo mkdir -p /home/ec2-user/FinServeApi
 
           echo "🔴 Stopping backend service so WebAPI is NOT locked..."
-          sudo systemctl stop finserve || true     # <-- REQUIRED FIX
+          sudo systemctl stop finserve || true
 
           echo "Extracting publish.tar.gz..."
           sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
