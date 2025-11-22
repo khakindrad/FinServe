@@ -49,7 +49,6 @@ jobs:
     - name: Create tarball of publish contents (no containing folder)
       run: |
         cd publish
-        # Tar contents only (NO appsettings.json)
         tar --exclude='appsettings*.json' -czf ../publish.tar.gz .
         cd ..
         echo "Created publish.tar.gz with size:"
@@ -78,9 +77,12 @@ jobs:
           sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
 
           echo "Preserving existing appsettings.json (not overwritten)."
-          # Nothing required here because tar doesn't include appsettings.json
 
           sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
+
+          # 🔥 PERMANENT FIX → ALWAYS RESET OWNERSHIP + PERMISSIONS
+          sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
+          sudo chmod -R 755 /home/ec2-user/FinServeApi
 
           sudo rm -f /home/ec2-user/publish.tar.gz
 
