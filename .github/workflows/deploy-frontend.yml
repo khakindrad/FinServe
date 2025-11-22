@@ -6,6 +6,7 @@ on:
 
 jobs:
   deploy:
+    if: contains(github.event.release.name, '[frontend]') || contains(github.event.release.body, '[frontend]')
     runs-on: ubuntu-latest
 
     steps:
