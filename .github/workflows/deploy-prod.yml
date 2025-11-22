@@ -5,56 +5,20 @@ on:
 
 jobs:
   approval:
-    name: Require Manual Approval
+    name: Wait For Manual Approval
     runs-on: ubuntu-latest
 
     steps:
-      - name: Approve Production Deployment
+      - name: Require Approval Before Production Deploy
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: khakindrad      # Change if needed
+          approvers: khakindrad
           minimum-approvals: 1
-          issue-title: "PROD Deployment Approval Needed"
-          issue-body: "Approve to deploy backend to EC2 production server."
+          issue-title: "PRODUCTION DEPLOYMENT APPROVAL"
+          issue-body: "Approve this request to deploy backend to PRODUCTION."
 
   deploy:
     name: Deploy to EC2 (Production)
     needs: approval
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Download Latest Release ZIP
-        uses: robinraju/release-downloader@v1
-        with:
-          latest: true
-          repository: ${{ github.repository }}
-          filename: "backend-release.zip"
-
-      - name: Extract ZIP
-        run: unzip backend-release.zip -d deploy
-
-      - name: Copy Build to EC2 (skip appsettings)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy/*"
-          target: "/home/ec2-user/FinServeApi/"
-          overwrite: true
-          excludes: |
-            appsettings.json
-            appsettings.Development.json
-            appsettings.Production.json
-
-      - name: Restart Backend Service
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
-            sudo systemctl restart finserveapi.service
-            sudo systemctl status finserveapi.service --no-pager
+    runs-on: u
