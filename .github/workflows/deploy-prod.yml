@@ -13,15 +13,15 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: khakindrad     # <-- CHANGE TO YOUR GITHUB USERNAME
+          approvers: khakindrad   # <-- change if needed
           minimum-approvals: 1
           issue-title: "Production Deployment Approval Needed"
           issue-body: "Approve this request to deploy backend to production."
 
   deploy:
     name: Deploy to Production EC2
-    runs-on: ubuntu-latest
     needs: approval
+    runs-on: ubuntu-latest
 
     steps:
       - name: Download Latest Release Build
@@ -49,7 +49,7 @@ jobs:
             appsettings.Development.json
             appsettings.Production.json
 
-      - name: Restart EC2 API Service
+      - name: Restart API Service
         uses: appleboy/ssh-action@v0.1.8
         with:
           host: ${{ secrets.EC2_HOST }}
