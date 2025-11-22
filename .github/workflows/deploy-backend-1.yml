@@ -1,4 +1,4 @@
-name: Deploy Backend to Elastic Beanstalk
+name: Deploy Backend CD
 
 on:
   workflow_dispatch:
