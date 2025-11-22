@@ -9,387 +9,386 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+[Migration("20251109123827_AddLoginHistoryBaseline")]
+partial class AddLoginHistoryBaseline
 {
-    [DbContext(typeof(AppDbContext))]
-    [Migration("20251109123827_AddLoginHistoryBaseline")]
-    partial class AddLoginHistoryBaseline
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
+        modelBuilder
+            .HasAnnotation("ProductVersion", "9.0.10")
+            .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+        MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsRead")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                b.Property<string>("Message")
+                    .IsRequired()
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("varchar(200)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("DashboardAlerts");
-                });
+                b.ToTable("DashboardAlerts");
+            });
 
-            modelBuilder.Entity("FinServe.Core.Entities.LoginHistory", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+        modelBuilder.Entity("FinServe.Core.Entities.LoginHistory", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Device")
-                        .HasColumnType("longtext");
+                b.Property<string>("Device")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                b.Property<string>("Email")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("longtext");
+                b.Property<string>("IpAddress")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("LoginTime")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("LoginTime")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("LogoutTime")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("LogoutTime")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Message")
-                        .HasColumnType("longtext");
+                b.Property<string>("Message")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("longtext");
+                b.Property<string>("Status")
+                    .HasColumnType("longtext");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                b.Property<int?>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("LoginHistory");
-                });
+                b.ToTable("LoginHistory");
+            });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("PasswordHistories");
-                });
+                b.ToTable("PasswordHistories");
+            });
 
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("ExpiresAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("longtext");
+                b.Property<string>("Token")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("Used")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("Used")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordResetTokens");
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedByIp")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("ReasonRevoked")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("ReplacedByToken")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Token")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
+
+                b.HasKey("Id");
+
+                b.HasIndex("UserId");
+
+                b.ToTable("PasswordResetTokens");
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
+
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<string>("CreatedByIp")
+                    .HasColumnType("longtext");
+
+                b.Property<DateTime>("ExpiresAt")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<string>("ReasonRevoked")
+                    .HasColumnType("longtext");
+
+                b.Property<string>("ReplacedByToken")
+                    .HasColumnType("longtext");
+
+                b.Property<DateTime?>("RevokedAt")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<string>("Token")
+                    .HasColumnType("longtext");
+
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
+                b.HasKey("Id");
+
+                b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
-                });
+                b.ToTable("RefreshTokens");
+            });
 
-            modelBuilder.Entity("FinServe.Core.Entities.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("FinServe.Core.Entities.Role", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                b.Property<string>("Description")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("varchar(100)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                b.ToTable("Roles");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Platform administrator",
-                            IsActive = true,
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Internal employee",
-                            IsActive = true,
-                            Name = "Employee"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Car dealer",
-                            IsActive = true,
-                            Name = "Dealer"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Bank representative",
-                            IsActive = true,
-                            Name = "Banker"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "End customer",
-                            IsActive = true,
-                            Name = "Customer"
-                        });
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("DeviceTokensJson")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<bool>("EmailVerified")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("FailedLoginCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("FullName")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime?>("LockoutEndAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("MfaEnabled")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("MfaSecret")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Mobile")
-                        .HasColumnType("longtext");
-
-                    b.Property<bool>("MobileVerified")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime?>("PasswordExpiryDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("PasswordLastChanged")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RoleId");
-
-                    b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Email = "admin@finserve.com",
-                            EmailVerified = true,
-                            FailedLoginCount = 0,
-                            FullName = "Platform Admin",
-                            IsActive = true,
-                            IsApproved = true,
-                            MfaEnabled = false,
-                            Mobile = "9999999999",
-                            MobileVerified = true,
-                            PasswordHash = "AQClchAv7t1dq3Rmxu7xgmEK4EbByfwx4UV0RUZprlFUXnupgTMWrHczDdfQb6z3WZh6AoD2Z8Q2+y4\r\n",
-                            PasswordLastChanged = new DateTime(2025, 11, 9, 12, 38, 27, 228, DateTimeKind.Utc).AddTicks(8759),
-                            RoleId = 1
-                        });
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
-                {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
-                {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
-                {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("FinServe.Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("FinServe.Core.Entities.User", b =>
-                {
-                    b.HasOne("FinServe.Core.Entities.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Role");
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Description = "Platform administrator",
+                        IsActive = true,
+                        Name = "Admin"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Description = "Internal employee",
+                        IsActive = true,
+                        Name = "Employee"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Description = "Car dealer",
+                        IsActive = true,
+                        Name = "Dealer"
+                    },
+                    new
+                    {
+                        Id = 4,
+                        Description = "Bank representative",
+                        IsActive = true,
+                        Name = "Banker"
+                    },
+                    new
+                    {
+                        Id = 5,
+                        Description = "End customer",
+                        IsActive = true,
+                        Name = "Customer"
+                    });
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.User", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
+
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                b.Property<string>("DeviceTokensJson")
+                    .HasColumnType("longtext");
+
+                b.Property<string>("Email")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("varchar(200)");
+
+                b.Property<bool>("EmailVerified")
+                    .HasColumnType("tinyint(1)");
+
+                b.Property<int>("FailedLoginCount")
+                    .HasColumnType("int");
+
+                b.Property<string>("FullName")
+                    .HasColumnType("longtext");
+
+                b.Property<bool>("IsActive")
+                    .HasColumnType("tinyint(1)");
+
+                b.Property<bool>("IsApproved")
+                    .HasColumnType("tinyint(1)");
+
+                b.Property<DateTime?>("LockoutEndAt")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<bool>("MfaEnabled")
+                    .HasColumnType("tinyint(1)");
+
+                b.Property<string>("MfaSecret")
+                    .HasColumnType("longtext");
+
+                b.Property<string>("Mobile")
+                    .HasColumnType("longtext");
+
+                b.Property<bool>("MobileVerified")
+                    .HasColumnType("tinyint(1)");
+
+                b.Property<DateTime?>("PasswordExpiryDate")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("longtext");
+
+                b.Property<DateTime>("PasswordLastChanged")
+                    .HasColumnType("datetime(6)");
+
+                b.Property<int>("RoleId")
+                    .HasColumnType("int");
+
+                b.HasKey("Id");
+
+                b.HasIndex("RoleId");
+
+                b.ToTable("Users");
+
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Email = "admin@finserve.com",
+                        EmailVerified = true,
+                        FailedLoginCount = 0,
+                        FullName = "Platform Admin",
+                        IsActive = true,
+                        IsApproved = true,
+                        MfaEnabled = false,
+                        Mobile = "9999999999",
+                        MobileVerified = true,
+                        PasswordHash = "AQClchAv7t1dq3Rmxu7xgmEK4EbByfwx4UV0RUZprlFUXnupgTMWrHczDdfQb6z3WZh6AoD2Z8Q2+y4\r\n",
+                        PasswordLastChanged = new DateTime(2025, 11, 9, 12, 38, 27, 228, DateTimeKind.Utc).AddTicks(8759),
+                        RoleId = 1
+                    });
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.DashboardAlert", b =>
+            {
+                b.HasOne("FinServe.Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.PasswordHistory", b =>
+            {
+                b.HasOne("FinServe.Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.PasswordResetToken", b =>
+            {
+                b.HasOne("FinServe.Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.RefreshToken", b =>
+            {
+                b.HasOne("FinServe.Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+
+                b.Navigation("User");
+            });
+
+        modelBuilder.Entity("FinServe.Core.Entities.User", b =>
+            {
+                b.HasOne("FinServe.Core.Entities.Role", "Role")
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
+
+                b.Navigation("Role");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

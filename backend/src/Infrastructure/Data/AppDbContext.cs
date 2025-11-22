@@ -2,9 +2,13 @@ using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
+
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) 
+        : base(options) 
+    {
+    }
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
@@ -55,7 +59,7 @@ public class AppDbContext : DbContext
                 // This is the PBKDF2-based hash format used by the AuthController HashPassword helper.
                 // Replace with your own hashed value if you prefer.
                 PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
-                PasswordLastChanged = System.DateTime.UtcNow
+                PasswordLastChanged = DateTime.UtcNow
             });
         });
 

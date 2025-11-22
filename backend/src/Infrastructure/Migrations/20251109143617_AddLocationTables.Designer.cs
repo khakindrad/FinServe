@@ -9,607 +9,606 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Migrations;
+
+[DbContext(typeof(AppDbContext))]
+[Migration("20251109143617_AddLocationTables")]
+partial class AddLocationTables
 {
-    [DbContext(typeof(AppDbContext))]
-    [Migration("20251109143617_AddLocationTables")]
-    partial class AddLocationTables
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.10")
-                .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("Core.Entities.City", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<int>("StateId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StateId");
-
-                    b.ToTable("Cities");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Name = "Mumbai",
-                            StateId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Name = "Pune",
-                            StateId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Name = "Ahmedabad",
-                            StateId = 2
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Name = "San Francisco",
-                            StateId = 3
-                        });
-                });
-
-            modelBuilder.Entity("Core.Entities.Country", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("IsoCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<string>("MobileCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Countries");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            IsoCode = "IN",
-                            MobileCode = "+91",
-                            Name = "India"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            IsoCode = "US",
-                            MobileCode = "+1",
-                            Name = "United States"
-                        });
-                });
+        modelBuilder
+            .HasAnnotation("ProductVersion", "9.0.10")
+            .HasAnnotation("Relational:MaxIdentifierLength", 64);
+
+        MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
+
+        modelBuilder.Entity("Core.Entities.City", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
+
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("varchar(100)");
+
+                b.Property<int>("StateId")
+                    .HasColumnType("int");
+
+                b.HasKey("Id");
+
+                b.HasIndex("StateId");
+
+                b.ToTable("Cities");
+
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Name = "Mumbai",
+                        StateId = 1
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Name = "Pune",
+                        StateId = 1
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Name = "Ahmedabad",
+                        StateId = 2
+                    },
+                    new
+                    {
+                        Id = 4,
+                        Name = "San Francisco",
+                        StateId = 3
+                    });
+            });
+
+        modelBuilder.Entity("Core.Entities.Country", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
+
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                b.Property<string>("IsoCode")
+                    .HasMaxLength(10)
+                    .HasColumnType("varchar(10)");
+
+                b.Property<string>("MobileCode")
+                    .HasMaxLength(10)
+                    .HasColumnType("varchar(10)");
+
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("varchar(100)");
+
+                b.HasKey("Id");
+
+                b.ToTable("Countries");
+
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        IsoCode = "IN",
+                        MobileCode = "+91",
+                        Name = "India"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        IsoCode = "US",
+                        MobileCode = "+1",
+                        Name = "United States"
+                    });
+            });
 
-            modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsRead")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                b.Property<string>("Message")
+                    .IsRequired()
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                b.Property<string>("Title")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("varchar(200)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("DashboardAlerts");
-                });
+                b.ToTable("DashboardAlerts");
+            });
 
-            modelBuilder.Entity("Core.Entities.LoginHistory", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+        modelBuilder.Entity("Core.Entities.LoginHistory", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Device")
-                        .HasColumnType("longtext");
+                b.Property<string>("Device")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Email")
-                        .HasColumnType("longtext");
+                b.Property<string>("Email")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("IpAddress")
-                        .HasColumnType("longtext");
+                b.Property<string>("IpAddress")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("LoginTime")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("LoginTime")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime?>("LogoutTime")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("LogoutTime")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Message")
-                        .HasColumnType("longtext");
+                b.Property<string>("Message")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Status")
-                        .HasColumnType("longtext");
+                b.Property<string>("Status")
+                    .HasColumnType("longtext");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                b.Property<int?>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("LoginHistory");
-                });
+                b.ToTable("LoginHistory");
+            });
 
-            modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("PasswordHistories");
-                });
+                b.ToTable("PasswordHistories");
+            });
 
-            modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("ExpiresAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("longtext");
+                b.Property<string>("Token")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("Used")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("Used")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("PasswordResetTokens");
-                });
+                b.ToTable("PasswordResetTokens");
+            });
 
-            modelBuilder.Entity("Core.Entities.RefreshToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.RefreshToken", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("CreatedByIp")
-                        .HasColumnType("longtext");
+                b.Property<string>("CreatedByIp")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("ExpiresAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("ReasonRevoked")
-                        .HasColumnType("longtext");
+                b.Property<string>("ReasonRevoked")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("ReplacedByToken")
-                        .HasColumnType("longtext");
+                b.Property<string>("ReplacedByToken")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("RevokedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("RevokedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("longtext");
+                b.Property<string>("Token")
+                    .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                b.Property<int>("UserId")
+                    .HasColumnType("int");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens");
-                });
+                b.ToTable("RefreshTokens");
+            });
 
-            modelBuilder.Entity("Core.Entities.Role", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.Role", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                b.Property<string>("Description")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("varchar(100)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.ToTable("Roles");
+                b.ToTable("Roles");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Platform administrator",
-                            IsActive = true,
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Internal employee",
-                            IsActive = true,
-                            Name = "Employee"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Car dealer",
-                            IsActive = true,
-                            Name = "Dealer"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Bank representative",
-                            IsActive = true,
-                            Name = "Banker"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "End customer",
-                            IsActive = true,
-                            Name = "Customer"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Description = "Platform administrator",
+                        IsActive = true,
+                        Name = "Admin"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        Description = "Internal employee",
+                        IsActive = true,
+                        Name = "Employee"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        Description = "Car dealer",
+                        IsActive = true,
+                        Name = "Dealer"
+                    },
+                    new
+                    {
+                        Id = 4,
+                        Description = "Bank representative",
+                        IsActive = true,
+                        Name = "Banker"
+                    },
+                    new
+                    {
+                        Id = 5,
+                        Description = "End customer",
+                        IsActive = true,
+                        Name = "Customer"
+                    });
+            });
 
-            modelBuilder.Entity("Core.Entities.State", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.State", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CountryId")
-                        .HasColumnType("int");
+                b.Property<int>("CountryId")
+                    .HasColumnType("int");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasMaxLength(100)
+                    .HasColumnType("varchar(100)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CountryId");
+                b.HasIndex("CountryId");
 
-                    b.ToTable("States");
+                b.ToTable("States");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CountryId = 1,
-                            Name = "Maharashtra"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CountryId = 1,
-                            Name = "Gujarat"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CountryId = 2,
-                            Name = "California"
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        CountryId = 1,
+                        Name = "Maharashtra"
+                    },
+                    new
+                    {
+                        Id = 2,
+                        CountryId = 1,
+                        Name = "Gujarat"
+                    },
+                    new
+                    {
+                        Id = 3,
+                        CountryId = 2,
+                        Name = "California"
+                    });
+            });
 
-            modelBuilder.Entity("Core.Entities.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Core.Entities.User", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .HasColumnType("longtext");
+                b.Property<string>("Address")
+                    .HasColumnType("longtext");
 
-                    b.Property<int?>("CityId")
-                        .HasColumnType("int");
+                b.Property<int?>("CityId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("CountryId")
-                        .HasColumnType("int");
+                b.Property<int?>("CountryId")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("CreatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("DeviceTokensJson")
-                        .HasColumnType("longtext");
+                b.Property<string>("DeviceTokensJson")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                b.Property<string>("Email")
+                    .IsRequired()
+                    .HasMaxLength(200)
+                    .HasColumnType("varchar(200)");
 
-                    b.Property<bool>("EmailVerified")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("EmailVerified")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("FailedLoginCount")
-                        .HasColumnType("int");
+                b.Property<int>("FailedLoginCount")
+                    .HasColumnType("int");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("longtext");
+                b.Property<string>("FirstName")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsActive")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<bool>("IsApproved")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("IsApproved")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("LastName")
-                        .HasColumnType("longtext");
+                b.Property<string>("LastName")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime?>("LockoutEndAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("LockoutEndAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("MfaEnabled")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("MfaEnabled")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("MfaSecret")
-                        .HasColumnType("longtext");
+                b.Property<string>("MfaSecret")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("MiddleName")
-                        .HasColumnType("longtext");
+                b.Property<string>("MiddleName")
+                    .HasColumnType("longtext");
 
-                    b.Property<string>("Mobile")
-                        .HasColumnType("longtext");
+                b.Property<string>("Mobile")
+                    .HasColumnType("longtext");
 
-                    b.Property<bool>("MobileVerified")
-                        .HasColumnType("tinyint(1)");
+                b.Property<bool>("MobileVerified")
+                    .HasColumnType("tinyint(1)");
 
-                    b.Property<DateTime?>("PasswordExpiryDate")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("PasswordExpiryDate")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("longtext");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("longtext");
 
-                    b.Property<DateTime>("PasswordLastChanged")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime>("PasswordLastChanged")
+                    .HasColumnType("datetime(6)");
 
-                    b.Property<string>("ProfileImageUrl")
-                        .HasColumnType("longtext");
+                b.Property<string>("ProfileImageUrl")
+                    .HasColumnType("longtext");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                b.Property<int>("RoleId")
+                    .HasColumnType("int");
 
-                    b.Property<int?>("StateId")
-                        .HasColumnType("int");
+                b.Property<int?>("StateId")
+                    .HasColumnType("int");
 
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
+                b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("datetime(6)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("CityId");
+                b.HasIndex("CityId");
 
-                    b.HasIndex("CountryId");
+                b.HasIndex("CountryId");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.HasIndex("StateId");
+                b.HasIndex("StateId");
 
-                    b.ToTable("Users");
+                b.ToTable("Users");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "",
-                            CreatedAt = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(2973),
-                            Email = "admin@finserve.com",
-                            EmailVerified = true,
-                            FailedLoginCount = 0,
-                            FirstName = "Platform Admin",
-                            IsActive = true,
-                            IsApproved = true,
-                            LastName = "",
-                            MfaEnabled = false,
-                            Mobile = "9999999999",
-                            MobileVerified = true,
-                            PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
-                            PasswordLastChanged = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(6141),
-                            RoleId = 1
-                        });
-                });
+                b.HasData(
+                    new
+                    {
+                        Id = 1,
+                        Address = "",
+                        CreatedAt = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(2973),
+                        Email = "admin@finserve.com",
+                        EmailVerified = true,
+                        FailedLoginCount = 0,
+                        FirstName = "Platform Admin",
+                        IsActive = true,
+                        IsApproved = true,
+                        LastName = "",
+                        MfaEnabled = false,
+                        Mobile = "9999999999",
+                        MobileVerified = true,
+                        PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
+                        PasswordLastChanged = new DateTime(2025, 11, 9, 14, 36, 14, 59, DateTimeKind.Utc).AddTicks(6141),
+                        RoleId = 1
+                    });
+            });
 
-            modelBuilder.Entity("Core.Entities.City", b =>
-                {
-                    b.HasOne("Core.Entities.State", "State")
-                        .WithMany("Cities")
-                        .HasForeignKey("StateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.City", b =>
+            {
+                b.HasOne("Core.Entities.State", "State")
+                    .WithMany("Cities")
+                    .HasForeignKey("StateId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("State");
-                });
+                b.Navigation("State");
+            });
 
-            modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
-                {
-                    b.HasOne("Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.DashboardAlert", b =>
+            {
+                b.HasOne("Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
-                {
-                    b.HasOne("Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.PasswordHistory", b =>
+            {
+                b.HasOne("Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
-                {
-                    b.HasOne("Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.PasswordResetToken", b =>
+            {
+                b.HasOne("Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Core.Entities.RefreshToken", b =>
-                {
-                    b.HasOne("Core.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.RefreshToken", b =>
+            {
+                b.HasOne("Core.Entities.User", "User")
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("Core.Entities.State", b =>
-                {
-                    b.HasOne("Core.Entities.Country", "Country")
-                        .WithMany("States")
-                        .HasForeignKey("CountryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Core.Entities.State", b =>
+            {
+                b.HasOne("Core.Entities.Country", "Country")
+                    .WithMany("States")
+                    .HasForeignKey("CountryId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.Navigation("Country");
-                });
+                b.Navigation("Country");
+            });
 
-            modelBuilder.Entity("Core.Entities.User", b =>
-                {
-                    b.HasOne("Core.Entities.City", "City")
-                        .WithMany()
-                        .HasForeignKey("CityId");
+        modelBuilder.Entity("Core.Entities.User", b =>
+            {
+                b.HasOne("Core.Entities.City", "City")
+                    .WithMany()
+                    .HasForeignKey("CityId");
 
-                    b.HasOne("Core.Entities.Country", "Country")
-                        .WithMany()
-                        .HasForeignKey("CountryId");
+                b.HasOne("Core.Entities.Country", "Country")
+                    .WithMany()
+                    .HasForeignKey("CountryId");
 
-                    b.HasOne("Core.Entities.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                b.HasOne("Core.Entities.Role", "Role")
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired();
 
-                    b.HasOne("Core.Entities.State", "State")
-                        .WithMany()
-                        .HasForeignKey("StateId");
+                b.HasOne("Core.Entities.State", "State")
+                    .WithMany()
+                    .HasForeignKey("StateId");
 
-                    b.Navigation("City");
+                b.Navigation("City");
 
-                    b.Navigation("Country");
+                b.Navigation("Country");
 
-                    b.Navigation("Role");
+                b.Navigation("Role");
 
-                    b.Navigation("State");
-                });
+                b.Navigation("State");
+            });
 
-            modelBuilder.Entity("Core.Entities.Country", b =>
-                {
-                    b.Navigation("States");
-                });
+        modelBuilder.Entity("Core.Entities.Country", b =>
+            {
+                b.Navigation("States");
+            });
 
-            modelBuilder.Entity("Core.Entities.State", b =>
-                {
-                    b.Navigation("Cities");
-                });
+        modelBuilder.Entity("Core.Entities.State", b =>
+            {
+                b.Navigation("Cities");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

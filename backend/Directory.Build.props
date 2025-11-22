@@ -1,13 +1,64 @@
 <Project>
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Deterministic>true</Deterministic>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <RunAnalyzersDuringBuild>true</RunAnalyzersDuringBuild>
+    <RunAnalyzersDuringLiveAnalysis>true</RunAnalyzersDuringLiveAnalysis>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+    <NoWarn>$(NoWarn), 1573,1591,1712, CA1036, CA1812, CA2225,MA0097,MA0048,MA0051</NoWarn>
+    <NoError>
+      $(NoError);
+    </NoError>
+    <ReportAnalyzer>true</ReportAnalyzer>
+    <AnalysisMode>All</AnalysisMode>
+    <Features>strict</Features>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <Deterministic>true</Deterministic>
 
+    <!--Project Specific Configurations-->
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
     <Platforms>x64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>Debug;Release;ReleaseLinux</Configurations>
+
+    <!--Publish Specific Configurations-->
+    <DebugType>Embedded</DebugType>
+    <PublishSingleFile>true</PublishSingleFile>
+
+    <!--Component Specific Configurations-->
+    <Title>FinServe</Title>
+    <Company>Devkota Labs</Company>
+    <Copyright>Copyright Devkota Labs 2025</Copyright>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+
+    <!--GC Specific Configurations-->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration) | $(Platform) ' == 'Release|x64'">
+    <DefineConstants>$(DefineConstants);WIN;x64</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration) | $(Platform)' == 'Debug |x64' ">
+    <DefineConstants>$(DefineConstants);WIN; x64</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration) | $(Platform)' == 'ReleaseLinux|x64'">
+    <DefineConstants>$(DefineConstants);LINUX; x64</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="$(MSBuildThisFileDirectory) BannedSymbols.txt" Link="Properties/BannedSymbols. txt" />
+    <Compile Include="$(MSBuildThisFileDirectory)/AssemblyInfo.cs" Link="Properties/AssemblyInfo.common.cs" />
+  </ItemGroup>
+
 </Project>

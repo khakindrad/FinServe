@@ -23,10 +23,10 @@ public class User
     public bool EmailVerified { get; set; } = false;
     public bool MobileVerified { get; set; } = false;
     public string PasswordHash { get; set; } = string.Empty;
-    public System.DateTime PasswordLastChanged { get; set; } = System.DateTime.UtcNow;
-    public System.DateTime? PasswordExpiryDate { get; set; }
+    public DateTime PasswordLastChanged { get; set; } = DateTime.UtcNow;
+    public DateTime? PasswordExpiryDate { get; set; }
     public int FailedLoginCount { get; set; } = 0;
-    public System.DateTime? LockoutEndAt { get; set; }
+    public DateTime? LockoutEndAt { get; set; }
     public bool MfaEnabled { get; set; } = false;
     public string? MfaSecret { get; set; }
     public string? DeviceTokensJson { get; set; }

@@ -14,7 +14,7 @@ public class RefreshTokenService
     public async Task<RefreshToken> CreateRefreshTokenAsync(int userId, string createdByIp, int days = 30)
     {
         var token = GenerateRandomToken(64);
-        var rt = new RefreshToken { UserId = userId, Token = token, CreatedByIp = createdByIp, ExpiresAt = DateTime.UtcNow.AddDays(days) };
+        var rt = new RefreshToken { UserId = userId, Token = token, CreatedByIp = createdByIp, ExpiresAt = DateTime.UtcNow.AddDays(days)};
         _db.RefreshTokens.Add(rt);
         await _db.SaveChangesAsync();
         return rt;
