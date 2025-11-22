@@ -13,7 +13,7 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ secrets.GITHUB_TOKEN }}
-          approvers: khakindrad   # <-- change if needed
+          approvers: khakindrad
           minimum-approvals: 1
           issue-title: "Production Deployment Approval Needed"
           issue-body: "Approve this request to deploy backend to production."
@@ -28,34 +28,3 @@ jobs:
         uses: robinraju/release-downloader@v1
         with:
           latest: true
-          repository: ${{ github.repository }}
-          filename: "backend-release.zip"
-
-      - name: Unzip Files
-        run: unzip backend-release.zip -d deploy
-
-      - name: Copy Build to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy/*"
-          target: "/home/ec2-user/FinServeApi/"
-          overwrite: true
-          strip_components: 0
-          excludes: |
-            appsettings.json
-            appsettings.Development.json
-            appsettings.Production.json
-
-      - name: Restart API Service
-        uses: appleboy/ssh-action@v0.1.8
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
-            sudo systemctl restart finserveapi.service
-            sudo systemctl status finserveapi.service --no-pager
