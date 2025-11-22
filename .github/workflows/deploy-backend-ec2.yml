@@ -1,4 +1,4 @@
-name: Deploy Backend to EC2 (Single-file, safe deploy)
+name: Deploy Backend CD
 
 on:
   workflow_dispatch:
