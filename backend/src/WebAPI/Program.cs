@@ -108,11 +108,11 @@ internal sealed class Program
 
             _logger = GetService<Serilog.ILogger>().ForContext<Program>();
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                db.Database.Migrate(); // creates DB if missing and applies migrations
-            }
+            //using (var scope = app.Services.CreateScope())
+            //{
+            //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            //    db.Database.Migrate(); // creates DB if missing and applies migrations
+            //}
 
             if (app.Environment.IsDevelopment())
             {
