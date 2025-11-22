@@ -35,14 +35,13 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      # Step 5: Set AWS S3 Bucket based on branch
+      # Step 5: Set AWS S3 Bucket dynamically based on branch
       - name: Set AWS S3 Bucket
-        id: bucket
         run: |
           if [ "${GITHUB_REF}" == "refs/heads/master" ]; then
-            echo "bucket=${{ secrets.FRONTEND_PROD_BUCKET }}" >> $GITHUB_ENV
+            echo "AWS_S3_BUCKET=${{ secrets.FRONTEND_PROD_BUCKET }}" >> $GITHUB_ENV
           else
-            echo "bucket=${{ secrets.FRONTEND_DEV_BUCKET }}" >> $GITHUB_ENV
+            echo "AWS_S3_BUCKET=${{ secrets.FRONTEND_DEV_BUCKET }}" >> $GITHUB_ENV
           fi
 
       # Step 6: Deploy to S3
@@ -51,7 +50,7 @@ jobs:
         with:
           args: --delete
         env:
-          AWS_S3_BUCKET: ${{ env.bucket }}
+          AWS_S3_BUCKET: $AWS_S3_BUCKET
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
