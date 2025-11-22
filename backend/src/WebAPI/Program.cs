@@ -80,7 +80,8 @@ internal sealed class Program
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .AllowAnyOrigin());
+                //.WithOrigins("https://localhost:3000", "https://dzrds0cnvm4xr.cloudfront.net/"))
+                );
             });
 
             builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
