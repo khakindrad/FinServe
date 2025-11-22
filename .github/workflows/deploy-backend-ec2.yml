@@ -72,10 +72,10 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          sudo mkdir -p /home/ec2-user/FinServeApi
+          sudo mkdir -p /home/ec2-user/FinServeAPINew
 
           echo "Extracting publish.tar.gz..."
-          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
+          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeAPINew --overwrite
 
           echo "Preserving existing appsettings.json (not overwritten)."
           # Nothing required here because tar doesn't include appsettings.json
