@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,6 +17,7 @@ namespace WebAPI.Controllers;
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
+    private readonly AppDbContext _db;
     private readonly IUserRepository _users;
     private readonly RefreshTokenService _rtService;
     private readonly EmailService _email;
@@ -23,14 +25,17 @@ public class AuthController : ControllerBase
     private readonly IConfiguration _config;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IUserRepository users, RefreshTokenService rtService, EmailService email, MfaService mfa, IConfiguration config, ILogger<AuthController> logger)
+    public AuthController(IUserRepository users, RefreshTokenService rtService, EmailService email, MfaService mfa, IConfiguration config, ILogger<AuthController> logger, AppDbContext db)
     {
         _users = users; _rtService = rtService; _email = email; _mfa = mfa; _config = config; _logger = logger;
+        _db = db;
     }
 
     public record RegisterDto(string Email, string Password, string? Mobile, string? FullName);
     public record LoginDto(string Email, string Password, string? TotpCode);
     public record RefreshDto(string RefreshToken);
+    public record VerifyEmailDto(int UserId);
+    public record VerifyMobileDto(int UserId);
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
@@ -41,12 +46,18 @@ public class AuthController : ControllerBase
         var (valid, message) = policy.ValidatePassword(dto.Password);
         if (!valid) return BadRequest(new { message });
 
-
         var existing = await _users.GetByEmailAsync(dto.Email);
         if (existing != null) return BadRequest("Email exists");
 
-        var user = new User { Email = dto.Email, Mobile = dto.Mobile, FirstName = dto.FullName ?? dto.Email, 
-            /*RoleId = 5,*/ IsActive = true, IsApproved = false };
+        var user = new User
+        {
+            Email = dto.Email,
+            Mobile = dto.Mobile,
+            FirstName = dto.FullName ?? dto.Email,
+            /*RoleId = 5,*/
+            IsActive = true,
+            IsApproved = false
+        };
         user.PasswordHash = HashPassword(dto.Password);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
@@ -57,8 +68,37 @@ public class AuthController : ControllerBase
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
         await historyService.AddToHistoryAsync(user);
 
-        var otp = GenerateOtp(6);
-        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", $"Your verification code is {otp} (demo). Use verify endpoints to mark verified.");
+        var token = GenerateToken();
+
+        var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
+
+        var record = new EmailVerificationToken
+        {
+            Email = dto.Email,
+            Token = token,
+            ExpiryTime = DateTime.UtcNow.AddHours(expiryHours),
+            IsUsed = false
+        };
+
+        _db.EmailVerificationTokens.Add(record);
+        await _db.SaveChangesAsync();
+
+        string verificationUrl = $"{Request.Scheme}://{Request.Host}/api/auth/verify-email?email={dto.Email}&token={token}";
+
+        string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p>Please click the button below to verify your account:</p>
+        <p><a href='{verificationUrl}' 
+              style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Verify Email
+           </a>
+        </p>
+        <p>This link will expire in {expiryHours} hour.</p>;
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
 
         var adminEmail = _config["Admin:NotificationEmail"];
         if (!string.IsNullOrEmpty(adminEmail)) await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
@@ -66,22 +106,38 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Registered. Verify email & mobile and wait for admin approval.", userId = user.Id });
     }
 
-    [HttpPost("verify-email")] 
-    public async Task<IActionResult> VerifyEmail([FromBody] dynamic body) 
-    { 
-        int userId = (int)body.userId; 
-        var user = await _users.GetByIdAsync(userId); 
-        if (user == null) 
-            return NotFound(); 
-        user.EmailVerified = true; 
-        await _users.UpdateAsync(user); 
-        await _users.SaveChangesAsync(); 
-        return Ok(new { message = "Email verified" }); 
+    [HttpGet("verify-email")]
+    public async Task<IActionResult> VerifyEmail([FromQuery] string email, [FromQuery] string token)
+    {
+        var record = await _db.EmailVerificationTokens
+            .Where(x => x.Email == email && x.Token == token && !x.IsUsed)
+            .OrderByDescending(x => x.Id)
+            .FirstOrDefaultAsync();
+
+        if (record == null)
+            return BadRequest("Invalid or already used token.");
+
+        if (record.ExpiryTime < DateTime.UtcNow)
+            return BadRequest("Verification link expired.");
+
+        record.IsUsed = true;
+        await _db.SaveChangesAsync();
+
+        // Mark user verified
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (user != null)
+        {
+            user.EmailVerified = true;
+            await _db.SaveChangesAsync();
+        }
+
+        return Ok("Email verified successfully!");
     }
+
     [HttpPost("verify-mobile")] 
-    public async Task<IActionResult> VerifyMobile([FromBody] dynamic body) 
+    public async Task<IActionResult> VerifyMobile([FromBody] VerifyMobileDto verifyMobileDto) 
     { 
-        int userId = (int)body.userId; 
+        int userId = verifyMobileDto.UserId; 
         var user = await _users.GetByIdAsync(userId); 
         if (user == null) 
             return NotFound(); 
@@ -197,6 +253,13 @@ public class AuthController : ControllerBase
     {
         var rng = RandomNumberGenerator.GetInt32(0, (int)Math.Pow(10, digits));
         return rng.ToString($"D{digits}");
+    }
+
+    private static string GenerateToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                      .Replace("/", "-")
+                      .Replace("+", "_");
     }
 
     private string GenerateJwt(User user)

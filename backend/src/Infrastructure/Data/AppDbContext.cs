@@ -22,6 +22,8 @@ public class AppDbContext : DbContext
     public DbSet<MenuMaster> MenuMaster { get; set; } = null!;
     public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
     public DbSet<UserRole> UserRoles { get; set; } = null!;
+    public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

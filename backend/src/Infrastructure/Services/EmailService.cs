@@ -14,13 +14,13 @@ public class EmailService
         var smtp = _config.GetSection("Smtp");
         var host = smtp["Host"];
         var port = int.Parse(smtp["Port"] ?? "587");
-        var user = smtp["User"];
+        //var user = smtp["User"];
         var pass = smtp["Pass"];
         var from = smtp["From"];
 
         using var client = new SmtpClient(host, port)
         {
-            Credentials = new NetworkCredential(user, pass),
+            Credentials = new NetworkCredential(from, pass),
             EnableSsl = true
         };
         var msg = new MailMessage(from, to, subject, html) { IsBodyHtml = true };
