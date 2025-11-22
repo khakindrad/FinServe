@@ -24,7 +24,7 @@ jobs:
             --self-contained true \
             -o ./output
 
-      - name: Copy Backend to EC2
+      - name: Copy Backend to EC2 (Skip appsettings.json)
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -33,6 +33,11 @@ jobs:
           source: "./output/*"
           target: "/home/ec2-user/FinServeApi/"
           overwrite: true
+          strip_components: 0
+          excludes: |
+            appsettings.json
+            appsettings.Development.json
+            appsettings.Production.json
 
       - name: Restart API service on EC2
         uses: appleboy/ssh-action@v0.1.8
@@ -42,4 +47,5 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
-            sudo systemctl restart finserve
+            sudo systemctl restart finserveapi.service
+            sudo systemctl status finserveapi.service --no-pager
