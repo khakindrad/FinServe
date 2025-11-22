@@ -114,7 +114,7 @@ internal sealed class Program
             //    db.Database.Migrate(); // creates DB if missing and applies migrations
             //}
 
-            if (app.Environment.IsDevelopment())
+            //if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
