@@ -1,10 +1,8 @@
 name: Deploy Frontend CD
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]   # 🚀 Auto-trigger when a release is published
 
 jobs:
   deploy:
