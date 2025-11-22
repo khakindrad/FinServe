@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
+      # Step 1: Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -35,18 +35,30 @@ jobs:
         working-directory: frontend
         run: npm run build
 
-      # Step 5: Deploy to S3
+      # Step 5: Set AWS S3 Bucket based on branch
+      - name: Set AWS S3 Bucket
+        id: bucket
+        run: |
+          if [ "${GITHUB_REF}" == "refs/heads/master" ]; then
+            echo "bucket=${{ secrets.FRONTEND_PROD_BUCKET }}" >> $GITHUB_ENV
+          else
+            echo "bucket=${{ secrets.FRONTEND_DEV_BUCKET }}" >> $GITHUB_ENV
+          fi
+
+      # Step 6: Deploy to S3
       - name: Deploy to S3
         uses: jakejarvis/s3-sync-action@v0.5.1
+        with:
+          args: --delete
         env:
-          AWS_S3_BUCKET: ${{ github.ref == 'refs/heads/master' && secrets.FRONTEND_PROD_BUCKET || secrets.FRONTEND_DEV_BUCKET }}
+          AWS_S3_BUCKET: ${{ env.bucket }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           SOURCE_DIR: "frontend/out"
 
-      # Step 6: Invalidate CloudFront cache (only for master branch)
-      - name: Invalidate CloudFront (only for master)
+      # Step 7: Invalidate CloudFront cache (only for master branch)
+      - name: Invalidate CloudFront (only master)
         if: github.ref == 'refs/heads/master'
         uses: chetan/invalidate-cloudfront-action@v1
         with:
