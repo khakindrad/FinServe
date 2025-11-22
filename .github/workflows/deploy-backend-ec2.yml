@@ -25,9 +25,6 @@ jobs:
 
     - name: Publish Backend (Single-file)
       run: |
-        # verify project exists (will fail with helpful error if not)
-        echo "Listing project path:"
-        ls -la ./backend/src/WebAPI/WebAPI.csproj
         echo "Publishing..."
         dotnet publish ./backend/src/WebAPI/WebAPI.csproj \
           -c Release \
@@ -36,18 +33,23 @@ jobs:
           --self-contained true \
           /p:PublishSingleFile=true \
           /p:IncludeNativeLibrariesForSelfExtract=true \
-          /p:PublishTrimmed=true \
+          /p:PublishTrimmed=false \
           /p:TrimMode=Link \
           /p:DebugType=None \
           /p:DebugSymbols=false
+
+        echo "Removing appsettings from publish folder..."
+        rm -f publish/appsettings.json || true
+        rm -f publish/appsettings.Development.json || true
+        rm -f publish/appsettings.Production.json || true
+
         echo "Publish done. publish/ contents:"
         ls -la publish || true
 
     - name: Create tarball of publish contents (no containing folder)
       run: |
-        # create tar of the CONTENTS of publish dir, so extraction will put files directly into target
         cd publish
-        tar -czf ../publish.tar.gz .
+        tar --exclude='appsettings*.json' -czf ../publish.tar.gz .
         cd ..
         echo "Created publish.tar.gz with size:"
         ls -lh publish.tar.gz
@@ -69,16 +71,22 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          # ensure folder exists
           sudo mkdir -p /home/ec2-user/FinServeApi
-          # extract tarball into the folder (tar in place)
-          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi
-          # set exec permission on single-file executable (if exists)
+
+          echo "Extracting publish.tar.gz..."
+          sudo tar -xzf /home/ec2-user/publish.tar.gz -C /home/ec2-user/FinServeApi --overwrite
+
+          echo "Preserving existing appsettings.json (not overwritten)."
+
           sudo chmod +x /home/ec2-user/FinServeApi/WebAPI || true
-          # remove tar after extraction
+
+          # 🔥 PERMANENT FIX → ALWAYS RESET OWNERSHIP + PERMISSIONS
+          sudo chown -R ec2-user:ec2-user /home/ec2-user/FinServeApi
+          sudo chmod -R 755 /home/ec2-user/FinServeApi
+
           sudo rm -f /home/ec2-user/publish.tar.gz
-          # list final folder for debug
-          echo "Final /home/ec2-user/FinServeApi contents:"
+
+          echo "Final deployment folder:"
           ls -la /home/ec2-user/FinServeApi | sed -n '1,200p'
 
     - name: Restart Backend service

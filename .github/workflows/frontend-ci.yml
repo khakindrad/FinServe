@@ -13,9 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # Step 2: Setup Node.js with caching
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -23,16 +25,22 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      # Step 3: Install dependencies
       - name: Install dependencies
         working-directory: frontend
         run: npm ci
 
-      - name: Build & Export Next.js
+      # Step 4: Build Next.js (generates frontend/out automatically)
+      - name: Build Frontend
         working-directory: frontend
-        run: |
-          npm run build
-          npm run export   # creates frontend/out
+        run: npm run build
 
+      # Step 5: Optional - preview build (can be removed if not needed)
+      #- name: Preview static site
+      #  working-directory: frontend
+      #  run: npx serve out &
+
+      # Step 6: Upload the static build artifact
       - name: Upload Frontend Artifact
         uses: actions/upload-artifact@v4
         with:

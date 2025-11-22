@@ -1,44 +1,109 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:54022/api";
+// lib/api.ts
+import { getAccessToken, setAccessToken, clearAccessToken } from "./auth";
+import { refreshAccessToken } from "./refreshClient";
+import { normalizeHeaders } from "./utils";
 
-async function request(path: string, options: RequestInit = {}) {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+export const API_BASE_URL = "http://localhost:54022/api";
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+// -----------------------------
+// RAW REQUEST (no retry logic)
+// -----------------------------
+async function rawRequest(path: string, options: RequestInit = {}) {
+  const token = getAccessToken();
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...normalizeHeaders(options.headers || {}),
+  };
+  if (token) {
+    baseHeaders["Authorization"] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: token ? `Bearer ${token}` : "",
-      ...(options.headers || {}),
-    },
+    headers: baseHeaders,
+    credentials: "include", // send refresh cookie
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: "API Error" }));
-    throw new Error(error.message || "Something went wrong");
+  return res;
+}
+
+// -----------------------------
+// MAIN REQUEST WRAPPER
+// -----------------------------
+async function request(path: string, options: RequestInit = {}) {
+
+  // 1) Try first call normally
+  let res = await rawRequest(path, options);
+
+  // 2) If unauthorized → try refreshing access token
+  if (res.status === 401) {
+    const newToken = await refreshAccessToken();
+
+    if (newToken) {
+      // retry again after token refresh
+      res = await rawRequest(path, options);
+    } else {
+      clearAccessToken();
+      throw new Error("Session expired. Please login again.");
+    }
   }
 
-  return response.json();
+  // 3) If still NOT OK → throw error
+  if (!res.ok) {
+    let errJson: any = null;
+
+    try {
+      errJson = await res.json();
+    } catch {}
+
+    const message =
+      errJson?.message ||
+      errJson?.error ||
+      `Request failed: ${res.status}`;
+
+    throw new Error(message);
+  }
+
+  // 4) Return JSON
+  try {
+    return await res.json();
+  } catch {
+    return null; // no body
+  }
 }
+
+// -----------------------------
+// EXPORT API METHODS
+// -----------------------------
 export const api = {
-  getProfile: () =>
-  request("/user/profile", {
-    method: "GET"
-  }),
+  // LOGIN
   login: (data: any) =>
-    request("/auth/login", {
+    request("/Auth/login", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
-  register: (data: any) =>
-    request("/auth/register", {
-      method: "POST",
-      body: JSON.stringify(data),
+  // GET CURRENT USER
+  me: () =>
+    request("/Auth/me", {
+      method: "GET",
     }),
 
-  refreshToken: (rToken: string) =>
-    request("/auth/refresh-token", {
+  // LOGOUT
+  logout: () =>
+    request("/Auth/logout", {
       method: "POST",
-      body: JSON.stringify({ refreshToken: rToken }),
+    }),
+  refresh: () => 
+    request("/Auth/refresh", { 
+      method: "POST", 
+    }),
+    forgotPassword: () => 
+    request("/Auth/forgot-password", { 
+      method: "POST", 
+    }),
+    register: (payload) => 
+    request("/Auth/register", { 
+      method: "POST", 
     }),
 };
+

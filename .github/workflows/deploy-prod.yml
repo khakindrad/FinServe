@@ -1,0 +1,61 @@
+name: Backend Prod Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  approval:
+    name: Wait For Manual Approval
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Require Approval Before Production Deploy
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: |
+            khakindrad
+          target-repository-owner: khakindrad
+          minimum-approvals: 1
+          issue-title: "Production Deployment Approval Needed"
+          issue-body: "Approve this request to deploy backend to production."
+
+  deploy:
+    name: Deploy to EC2 (Production)
+    needs: approval
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Latest Release
+        uses: robinraju/release-downloader@v1
+        with:
+          latest: true
+          repository: ${{ github.repository }}
+          filename: "backend-release.zip"
+
+      - name: Unzip Release Files
+        run: unzip backend-release.zip -d deploy
+
+      - name: Upload Files to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "deploy/*"
+          target: "/home/ec2-user/FinServeApi/"
+          overwrite: true
+          strip_components: 0
+          excludes: |
+            appsettings.json
+            appsettings.*.json
+
+      - name: Restart API Service
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            sudo systemctl restart finserveapi.service
+            sudo systemctl status finserveapi.service --no-pager

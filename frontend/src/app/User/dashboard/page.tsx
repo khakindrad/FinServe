@@ -1,53 +1,39 @@
 "use client";
-
+import { useEffect } from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import UserDashboardLayout from "@/components/dashboards/UserDashboardLayout";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { getAccessToken  } from "@/lib/auth"; 
 export default function DashboardPage() {
   const { user } = useAuth();
-
+ 
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-lg font-semibold">
-        Loading dashboard...
-      </div>
-    );
+    return <div className="min-h-screen flex items-center justify-center text-xl">Loading...</div>;
   }
-
   return (
-    <div className="min-h-screen px-6 py-10 bg-gray-50">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+    <UserDashboardLayout>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <Card className="rounded-2xl shadow-md p-6">
+          <h3 className="text-2xl font-bold mb-4">Welcome back, {user.fullName.split(" ")[0]}! 👋</h3>
+          <p className="text-gray-600 mb-6">Here’s a quick overview of your financial activity.</p>
 
-      {/* USER CARD */}
-      <Card className="max-w-xl shadow-md border">
-        <CardHeader>
-          <CardTitle className="text-xl">Welcome, {user.firstName} 👋</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-3 text-gray-700">
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Phone:</strong> {user.phone}</p>
-          <p><strong>Joined:</strong> {new Date(user.createdAt).toDateString()}</p>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="p-6 shadow-md border hover:shadow-xl transition">
-          <h3 className="text-lg font-semibold">View Transactions</h3>
-          <p className="text-sm text-gray-600 mt-1">Check your financial activity.</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader><CardTitle>Account Balance</CardTitle></CardHeader>
+              <CardContent><p className="text-3xl font-bold">₹ {user.balance ?? 0}</p></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Investments</CardTitle></CardHeader>
+              <CardContent><p className="text-3xl font-bold">₹ {user.investments ?? 0}</p></CardContent>
+            </Card>
+            <Card>
+              <CardHeader><CardTitle>Monthly Expenses</CardTitle></CardHeader>
+              <CardContent><p className="text-3xl font-bold">₹ {user.expenses ?? 0}</p></CardContent>
+            </Card>
+          </div>
         </Card>
-
-        <Card className="p-6 shadow-md border hover:shadow-xl transition">
-          <h3 className="text-lg font-semibold">Manage Profile</h3>
-          <p className="text-sm text-gray-600 mt-1">Update your personal details.</p>
-        </Card>
-
-        <Card className="p-6 shadow-md border hover:shadow-xl transition">
-          <h3 className="text-lg font-semibold">Security Settings</h3>
-          <p className="text-sm text-gray-600 mt-1">Manage login & security.</p>
-        </Card>
-      </div>
-    </div>
+      </motion.div>
+    </UserDashboardLayout>
   );
 }
