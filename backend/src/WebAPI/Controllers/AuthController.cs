@@ -16,7 +16,7 @@ namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController : ControllerBase
+public sealed class AuthController : ControllerBase
 {
     private readonly AppDbContext _db;
     private readonly IUserRepository _users;
@@ -159,11 +159,17 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
         var user = await _users.GetByEmailAsync(dto.Email);
-        if (user == null) return Unauthorized();
+        if (user == null)
+            return Unauthorized();
 
-        if (!user.IsApproved) return Forbid("User not approved");
-        if (!user.EmailVerified || !user.MobileVerified) return Forbid("Email and mobile must be verified");
-        if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow) return Forbid("Account locked");
+        if (!user.IsApproved)
+            return Forbid("User not approved");
+
+        if (!user.EmailVerified || !user.MobileVerified)
+            return Forbid("Email and mobile must be verified");
+
+        if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow)
+            return Forbid("Account locked");
 
         if (!VerifyHashedPassword(user.PasswordHash, dto.Password))
         {
@@ -173,11 +179,14 @@ public class AuthController : ControllerBase
                 user.LockoutEndAt = DateTime.UtcNow.AddMinutes(_config.GetValue("Security:Lockout:LockoutMinutes", 15));
                 user.FailedLoginCount = 0;
             }
-            await _users.UpdateAsync(user); await _users.SaveChangesAsync();
+            await _users.UpdateAsync(user);
+            await _users.SaveChangesAsync();
             return Unauthorized("Invalid credentials");
         }
 
-        user.FailedLoginCount = 0; await _users.UpdateAsync(user); await _users.SaveChangesAsync();
+        user.FailedLoginCount = 0;
+        await _users.UpdateAsync(user);
+        await _users.SaveChangesAsync();
 
         if (user.MfaEnabled)
         {
@@ -187,37 +196,90 @@ public class AuthController : ControllerBase
 
         var accessToken = GenerateJwt(user);
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
         var refresh = await _rtService.CreateRefreshTokenAsync(user.Id, ip, days: 30);
 
-        return Ok(new { accessToken, refreshToken = refresh.Token, user =
-            new { user.Id, user.Email, user.FullName, role = user.UserRoles } });
+        //Correct cookie append
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = false, // set to true if using HTTPS
+            SameSite = SameSiteMode.None, // required for cross-origin cookies
+            Expires = DateTime.UtcNow.AddDays(30),
+            Path = "/" // optional, but ensures cookie is available to the whole app
+        };
+        // Use refresh.Token here
+        Response.Cookies.Append("refreshToken", refresh.Token, cookieOptions);
+
+        return Ok(new
+        {
+            accessToken,
+            user =
+            new { user.Id, user.Email, user.FullName, role = user.UserRoles }
+        });
     }
 
-    [HttpPost("refresh")] 
-    public async Task<IActionResult> Refresh([FromBody] RefreshDto dto) 
-    { 
-        var rt = await _rtService.GetValidRefreshTokenAsync(dto.RefreshToken); 
-        if (rt == null) 
-            return Unauthorized(); 
-        var newRt = await _rtService.CreateRefreshTokenAsync(rt.UserId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", 30); 
-        await _rtService.RevokeAsync(rt, "rotated", newRt.Token); 
-        var user = await _users.GetByIdAsync(rt.UserId); 
-        
-        if (user == null) 
-            return Unauthorized(); 
-        var accessToken = GenerateJwt(user); 
-        return Ok(new { accessToken, refreshToken = newRt.Token }); 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        string? refreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+            return Unauthorized(new { message = "Refresh token missing" });
+
+        var rt = await _rtService.GetValidRefreshTokenAsync(refreshToken);
+
+        if (rt == null)
+            return Unauthorized(new { message = "Invalid refresh token" });
+
+        var newRt = await _rtService.CreateRefreshTokenAsync(rt.UserId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", 30);
+
+        await _rtService.RevokeAsync(rt, "rotated", newRt.Token);
+
+        var user = await _users.GetByIdAsync(rt.UserId);
+
+        if (user == null)
+            return Unauthorized(new { message = "User not found" });
+
+        var accessToken = GenerateJwt(user);
+        Response.Cookies.Append(
+            "refreshToken",
+            newRt.Token,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,       // Use HTTPS
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTime.UtcNow.AddDays(30),
+                Path = "/api/auth/refresh"
+            }
+            );
+
+        return Ok(new
+        {
+            accessToken
+        });
     }
 
-    [HttpPost("logout")] 
-    public async Task<IActionResult> Logout([FromBody] dynamic body) 
-    { 
-        string token = (string)body.refreshToken; 
-        var rt = await _rtService.GetValidRefreshTokenAsync(token); 
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        var token = Request.Cookies["refreshToken"]; // read cookie
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            var rt = await _rtService.GetValidRefreshTokenAsync(token);
 
-        if (rt != null) 
-            await _rtService.RevokeAsync(rt, "logout"); 
-        return Ok(new { message = "Logged out" }); 
+            if (rt != null)
+                await _rtService.RevokeAsync(rt, "logout");
+        }
+        // delete cookie
+        Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/"
+        });
+        return Ok(new { message = "Logged out" });
     }
 
     [HttpPut("admin/approve/{id}")] 
