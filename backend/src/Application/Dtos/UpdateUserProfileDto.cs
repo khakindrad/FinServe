@@ -13,7 +13,7 @@ public class UpdateUserProfileDto
     public string? ProfileImageUrl { get; set; }
 
     // Location fields (can be null)
-    public int? CountryId { get; set; }
-    public int? StateId { get; set; }
-    public int? CityId { get; set; }
+    public int CountryId { get; set; }
+    public int StateId { get; set; }
+    public int CityId { get; set; }
 }

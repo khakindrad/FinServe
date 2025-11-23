@@ -1,3 +1,4 @@
+using Common;
 using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -52,7 +53,15 @@ public class AppDbContext : DbContext
                 Id = 1,
                 Email = "admin@finserve.com",
                 Mobile = "9999999999",
+                Gender = Gender.PerferNotToSay,
+                DateOfBirth = DateTimeUtil.DateOnly,
                 FirstName = "Platform Admin",
+                LastName = "FinServe",         
+                CountryId = 1,
+                StateId = 1,
+                CityId = 1,
+                Address = "123 Admin St, Metropolis",
+                PinCode = "400001",
                 //UserRoles = 1,
                 IsActive = true,
                 IsApproved = true,
@@ -126,9 +135,9 @@ public class AppDbContext : DbContext
         });
 
         modelBuilder.Entity<Country>().HasData(
-    new Country { Id = 1, Name = "India", IsoCode = "IN", MobileCode = "+91" },
-    new Country { Id = 2, Name = "United States", IsoCode = "US", MobileCode = "+1" }
-);
+            new Country { Id = 1, Name = "India", IsoCode = "IN", MobileCode = "+91" },
+            new Country { Id = 2, Name = "United States", IsoCode = "US", MobileCode = "+1" }
+            );
 
         modelBuilder.Entity<State>().HasData(
             new State { Id = 1, Name = "Maharashtra", CountryId = 1 },

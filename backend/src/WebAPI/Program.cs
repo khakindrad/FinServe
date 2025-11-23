@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Serilog.Debugging;
 using System.Runtime;
+using System.Text.Json.Serialization;
 using WebAPI.HostedServices;
 using WebAPI.Middleware;
 using WebAPI.Services;
@@ -104,7 +105,11 @@ internal sealed class Program
 
             builder.Services.AddAuthorization();
 
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(o =>
+                {
+                    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 

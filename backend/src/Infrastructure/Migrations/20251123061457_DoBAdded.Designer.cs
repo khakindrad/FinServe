@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123061457_DoBAdded")]
+    partial class DoBAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -502,8 +505,8 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<DateOnly>("DateOfBirth")
-                        .HasColumnType("date");
+                    b.Property<DateTime>("DateOfBirth")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("DeviceTokensJson")
                         .HasColumnType("longtext");
@@ -595,8 +598,8 @@ namespace Infrastructure.Migrations
                             Address = "123 Admin St, Metropolis",
                             CityId = 1,
                             CountryId = 1,
-                            CreatedAt = new DateTime(2025, 11, 23, 6, 24, 38, 195, DateTimeKind.Utc).AddTicks(9471),
-                            DateOfBirth = new DateOnly(2025, 11, 23),
+                            CreatedAt = new DateTime(2025, 11, 23, 6, 14, 56, 823, DateTimeKind.Utc).AddTicks(6025),
+                            DateOfBirth = new DateTime(1995, 11, 23, 11, 44, 56, 823, DateTimeKind.Local).AddTicks(6532),
                             Email = "admin@finserve.com",
                             EmailVerified = true,
                             FailedLoginCount = 0,
@@ -609,7 +612,7 @@ namespace Infrastructure.Migrations
                             Mobile = "9999999999",
                             MobileVerified = true,
                             PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
-                            PasswordLastChanged = new DateTime(2025, 11, 23, 6, 24, 38, 196, DateTimeKind.Utc).AddTicks(1415),
+                            PasswordLastChanged = new DateTime(2025, 11, 23, 6, 14, 56, 823, DateTimeKind.Utc).AddTicks(7658),
                             PinCode = "400001",
                             StateId = 1
                         });

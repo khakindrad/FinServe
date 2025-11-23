@@ -1,3 +1,4 @@
+using Application.Dtos;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -31,36 +32,42 @@ public class AuthController : ControllerBase
         _db = db;
     }
 
-    public record RegisterDto(string Email, string Password, string? Mobile, string? FullName);
-    public record LoginDto(string Email, string Password, string? TotpCode);
-    public record RefreshDto(string RefreshToken);
-    public record VerifyEmailDto(int UserId);
-    public record VerifyMobileDto(int UserId);
-
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password)) return BadRequest("Email/password required");
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password)) 
+            return BadRequest("Email/password required");
 
         var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
         var (valid, message) = policy.ValidatePassword(dto.Password);
-        if (!valid) return BadRequest(new { message });
+        if (!valid)
+            return BadRequest(new { message });
 
         var existing = await _users.GetByEmailAsync(dto.Email);
-        if (existing != null) return BadRequest("Email exists");
+
+        if (existing != null) 
+            return BadRequest("Email exists");
 
         var user = new User
         {
             Email = dto.Email,
             Mobile = dto.Mobile,
-            FirstName = dto.FullName ?? dto.Email,
-            /*RoleId = 5,*/
+            Gender = dto.Gender,
+            DateOfBirth = dto.DateOfBirth,
+            FirstName = dto.FirstName,
+            MiddleName = dto.MiddleName,
+            LastName = dto.LastName,
+            CountryId = dto.CountryId,
+            CityId = dto.CityId,
+            StateId = dto.StateId,
+            Address = dto.Address,
+            PinCode = dto.PinCode,
             IsActive = true,
-            IsApproved = false
+            IsApproved = false,
+            PasswordHash = HashPassword(dto.Password),
+            PasswordLastChanged = DateTime.UtcNow,
+            PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90))
         };
-        user.PasswordHash = HashPassword(dto.Password);
-        user.PasswordLastChanged = DateTime.UtcNow;
-        user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
         await _users.AddAsync(user);
         await _users.SaveChangesAsync();
@@ -101,7 +108,8 @@ public class AuthController : ControllerBase
         await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
 
         var adminEmail = _config["Admin:NotificationEmail"];
-        if (!string.IsNullOrEmpty(adminEmail)) await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
+        if (!string.IsNullOrEmpty(adminEmail)) 
+            await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
 
         return Ok(new { message = "Registered. Verify email & mobile and wait for admin approval.", userId = user.Id });
     }
