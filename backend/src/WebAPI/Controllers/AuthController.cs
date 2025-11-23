@@ -4,6 +4,7 @@ using Core.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -48,6 +49,8 @@ public sealed class AuthController : ControllerBase
         if (existing != null) 
             return BadRequest("Email exists");
 
+        var hasher = new PasswordHasher<User>();
+
         var user = new User
         {
             Email = dto.Email,
@@ -64,10 +67,12 @@ public sealed class AuthController : ControllerBase
             PinCode = dto.PinCode,
             IsActive = true,
             IsApproved = false,
-            PasswordHash = HashPassword(dto.Password),
+            PasswordHash = string.Empty,
             PasswordLastChanged = DateTime.UtcNow,
             PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90))
         };
+
+        user.PasswordHash = hasher.HashPassword(user, dto.Password);
 
         await _users.AddAsync(user);
         await _users.SaveChangesAsync();
@@ -171,7 +176,9 @@ public sealed class AuthController : ControllerBase
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow)
             return Forbid("Account locked");
 
-        if (!VerifyHashedPassword(user.PasswordHash, dto.Password))
+        var hasher = new PasswordHasher<User>();
+
+        if (hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password) == PasswordVerificationResult.Failed)
         {
             user.FailedLoginCount++;
             if (user.FailedLoginCount >= _config.GetValue("Security:Lockout:MaxFailedAttempts", 5))
@@ -211,15 +218,18 @@ public sealed class AuthController : ControllerBase
         // Use refresh.Token here
         Response.Cookies.Append("refreshToken", refresh.Token, cookieOptions);
 
-        return Ok(new
+        return Ok(new LoginResponseDto
         {
-            accessToken,
-            user =
-            new { user.Id, user.Email, user.FullName, role = user.UserRoles }
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email,
+            Roles = user.UserRoles
+            .Select(ur => ur.Role.Name).ToList(),
         });
     }
 
-    [HttpPost("refresh")]
+    [HttpGet("refresh")]
+    [Authorize]
     public async Task<IActionResult> Refresh()
     {
         string? refreshToken = Request.Cookies["refreshToken"];
@@ -260,7 +270,8 @@ public sealed class AuthController : ControllerBase
         });
     }
 
-    [HttpPost("logout")]
+    [HttpGet("logout")]
+    [Authorize]
     public async Task<IActionResult> Logout()
     {
         var token = Request.Cookies["refreshToken"]; // read cookie
@@ -280,43 +291,6 @@ public sealed class AuthController : ControllerBase
             Path = "/"
         });
         return Ok(new { message = "Logged out" });
-    }
-
-    [HttpPut("admin/approve/{id}")] 
-    public async Task<IActionResult> ApproveUser(int id) 
-    { 
-        var user = await _users.GetByIdAsync(id); 
-        if (user == null) 
-            return NotFound();
-        
-        user.IsApproved = true; 
-        await _users.UpdateAsync(user); 
-        await _users.SaveChangesAsync(); 
-        await _email.SendEmailAsync(user.Email, "Account approved", "Your account is approved by admin.");
-        return Ok(new { message = "Approved" }); 
-    }
-
-    // Helpers (PBKDF2)
-    private static string HashPassword(string password)
-    {
-        byte[] salt = RandomNumberGenerator.GetBytes(16);
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
-        byte[] result = new byte[49];
-        result[0] = 0x01;
-        Buffer.BlockCopy(salt, 0, result, 1, 16);
-        Buffer.BlockCopy(hash, 0, result, 17, 32);
-        return Convert.ToBase64String(result);
-    }
-
-    private static bool VerifyHashedPassword(string hash, string password)
-    {
-        var bytes = Convert.FromBase64String(hash);
-        var salt = new byte[16];
-        Buffer.BlockCopy(bytes, 1, salt, 0, 16);
-        var stored = new byte[32];
-        Buffer.BlockCopy(bytes, 17, stored, 0, 32);
-        var derived = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
-        return CryptographicOperations.FixedTimeEquals(stored, derived);
     }
 
     private static string GenerateOtp(int digits)
@@ -353,9 +327,8 @@ public sealed class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] dynamic body, [FromServices] PasswordResetService resetService)
+    public async Task<IActionResult> ForgotPassword([FromBody] string email, [FromServices] PasswordResetService resetService)
     {
-        string email = (string)body.email;
         var user = await _users.GetByEmailAsync(email);
         if (user == null)
         {
@@ -363,11 +336,26 @@ public sealed class AuthController : ControllerBase
             return Ok(new { message = "If account exists, a reset link has been sent." });
         }
 
-        var tokenEntity = await resetService.CreateTokenAsync(user.Id, 30);
+        var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
+
+        var tokenEntity = await resetService.CreateTokenAsync(user.Id, (int)TimeSpan.FromHours(expiryHours).TotalMinutes);
+
         var resetUrl = $"{Request.Scheme}://{Request.Host}/reset/{Uri.EscapeDataString(tokenEntity.Token)}";
 
-        await _email.SendEmailAsync(user.Email, "Password reset request",
-            $"<p>Hello {user.FullName},</p><p>Click below to reset your password:</p><p><a href='{resetUrl}'>Reset Password</a></p><p>This link will expire in 30 minutes.</p>");
+        string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p>Click below to reset your password:</p>
+        <p><a href='{resetUrl}' 
+              style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Reset Password
+           </a>
+        </p>
+        <p>This link will expire in {expiryHours} hour.</p>;
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Password reset request", body);
 
         return Ok(new { message = "If account exists, a reset link has been sent." });
     }
@@ -386,15 +374,20 @@ public sealed class AuthController : ControllerBase
         }
 
         var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
+
         var (valid, message) = policy.ValidatePassword(newPassword);
-        if (!valid) return BadRequest(new { message });
+
+        if (!valid)
+            return BadRequest(new { message });
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
 
         if (await historyService.IsPasswordReusedAsync(user, newPassword))
             return BadRequest(new { message = "You cannot reuse any of your last passwords." });
 
-        user.PasswordHash = HashPassword(newPassword);
+        var hasher = new PasswordHasher<User>();
+
+        user.PasswordHash = hasher.HashPassword(user, newPassword);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
@@ -405,15 +398,5 @@ public sealed class AuthController : ControllerBase
         await _email.SendEmailAsync(user.Email, "Password Reset Successful", "Your password has been reset successfully.");
 
         return Ok(new { message = "Password reset successful." });
-    }
-
-    [HttpDelete("cleanup-reset-tokens")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Cleanup([FromServices] AppDbContext db)
-    {
-        var expired = db.PasswordResetTokens.Where(t => t.ExpiresAt < DateTime.UtcNow);
-        db.PasswordResetTokens.RemoveRange(expired);
-        await db.SaveChangesAsync();
-        return Ok(new { message = "Expired tokens removed." });
     }
 }

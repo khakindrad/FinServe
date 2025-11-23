@@ -1,4 +1,3 @@
-using Common;
 using Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,7 +28,8 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Role>(b => {
+        modelBuilder.Entity<Role>(b =>
+        {
             b.HasKey(r => r.Id);
             b.Property(r => r.Name).IsRequired().HasMaxLength(100);
             b.HasData(
@@ -41,37 +41,11 @@ public class AppDbContext : DbContext
             );
         });
 
-        modelBuilder.Entity<User>(b => {
+        modelBuilder.Entity<User>(b =>
+        {
             b.HasKey(u => u.Id);
             b.Property(u => u.Email).IsRequired().HasMaxLength(200);
-            //b.HasOne(u => u.UserRoles).WithMany().HasForeignKey(u => u.Id).OnDelete(DeleteBehavior.Restrict)
-            ;
-
-            // Seed admin user
-            b.HasData(new User
-            {
-                Id = 1,
-                Email = "admin@finserve.com",
-                Mobile = "9999999999",
-                Gender = Gender.PerferNotToSay,
-                DateOfBirth = DateTimeUtil.DateOnly,
-                FirstName = "Platform Admin",
-                LastName = "FinServe",         
-                CountryId = 1,
-                StateId = 1,
-                CityId = 1,
-                Address = "123 Admin St, Metropolis",
-                PinCode = "400001",
-                //UserRoles = 1,
-                IsActive = true,
-                IsApproved = true,
-                EmailVerified = true,
-                MobileVerified = true,
-                // This is the PBKDF2-based hash format used by the AuthController HashPassword helper.
-                // Replace with your own hashed value if you prefer.
-                PasswordHash = "AZUDxldlM/X1TmQVaJ3Hg9yQfFFBgj8Fj0AvJy4CH6s8o/Rr5Ag/c4VXRoLfJh0UJA==",
-                PasswordLastChanged = DateTime.UtcNow
-            });
+            b.HasMany(u => u.UserRoles);
         });
 
         modelBuilder.Entity<PasswordResetToken>(b =>
@@ -152,21 +126,33 @@ public class AppDbContext : DbContext
             new City { Id = 4, Name = "San Francisco", StateId = 3 }
         );
 
+        // USER <--> ROLE (Join Table)
         modelBuilder.Entity<UserRole>()
-    .HasKey(ur => ur.UserRoleId);
+            .HasKey(ur => new { ur.UserId, ur.RoleId });
 
         modelBuilder.Entity<UserRole>()
             .HasOne(ur => ur.User)
             .WithMany(u => u.UserRoles)
             .HasForeignKey(ur => ur.UserId);
 
-        //modelBuilder.Entity<UserRole>()
-        //    .HasOne(ur => ur.Role)
-        //    .WithMany(r => r.UserRoles)
-        //    .HasForeignKey(ur => ur.RoleId);
+        modelBuilder.Entity<UserRole>()
+        .HasOne(ur => ur.Role)
+        .WithMany(r => r.UserRoles)
+        .HasForeignKey(ur => ur.RoleId);
+
+        // ROLE <--> MENU (Join Table)
+        modelBuilder.Entity<RoleMenu>()
+            .HasKey(rm => new { rm.RoleId, rm.MenuId });
 
         modelBuilder.Entity<RoleMenu>()
-            .HasKey(rm => rm.RoleMenuId);
+        .HasOne(rm => rm.Role)
+        .WithMany(r => r.RoleMenus)
+        .HasForeignKey(rm => rm.RoleId);
+
+        modelBuilder.Entity<RoleMenu>()
+        .HasOne(rm => rm.MenuMaster)
+        .WithMany(m => m.RoleMenus)
+        .HasForeignKey(rm => rm.MenuId);
 
         modelBuilder.Entity<MenuMaster>()
             .HasKey(m => m.MenuId);
@@ -176,10 +162,5 @@ public class AppDbContext : DbContext
             .WithOne()
             .HasForeignKey(m => m.ParentId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<RoleMenu>()
-        .HasOne(rm => rm.Role)
-        .WithMany(r => r.RoleMenus)
-        .HasForeignKey(rm => rm.RoleId);
     }
 }

@@ -1,4 +1,3 @@
-using Common;
 using Common.Configurations;
 using Common.Helper;
 using Core.Interfaces;
@@ -6,29 +5,33 @@ using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Debugging;
 using System.Runtime;
+using System.Text;
 using System.Text.Json.Serialization;
 using WebAPI.HostedServices;
 using WebAPI.Middleware;
 using WebAPI.Services;
+using DateTimeUtil = Common.DateTimeUtil;
 
 internal sealed class Program
 {
     private const string _appName = "Fin Serve API";
     private const string _stopCommand = "STOP";
     private static Serilog.ILogger _logger;
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         try
         {
             var mainThreadName = "Main Thread";
             Thread.CurrentThread.Name = mainThreadName;
 
-            var builder = WebApplication.CreateBuilder(args); 
-            
-            var processPath=Path.GetDirectoryName(Environment.ProcessPath)??throw new InvalidOperationException("Unable to determine process path");
+            var builder = WebApplication.CreateBuilder(args);
+
+            var processPath = Path.GetDirectoryName(Environment.ProcessPath) ?? throw new InvalidOperationException("Unable to determine process path");
 
             Directory.SetCurrentDirectory(processPath);
 
@@ -46,7 +49,7 @@ internal sealed class Program
             GCSettings.LatencyMode = appConfig.GCLatencyMode;
 
             SelfLog.Enable(msg => Console.Error.WriteLine($"Serilog SelfLog: {msg}"));
-            
+
             builder.Host.UseSerilog((ctx, lc) => lc
                 .ReadFrom.Configuration(ctx.Configuration));
 
@@ -92,16 +95,21 @@ internal sealed class Program
                 });
             });
 
-            builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
-            {
-                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            builder.Services.AddAuthentication("Bearer")
+                .AddJwtBearer("Bearer", options =>
                 {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true
-                };
-            });
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                        ValidAudience = builder.Configuration["Jwt:Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                    };
+                });
 
             builder.Services.AddAuthorization();
 
@@ -109,9 +117,34 @@ internal sealed class Program
                 .AddJsonOptions(o =>
                 {
                     o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    //o.JsonSerializerOptions.Converters.Add(new DateOnlyConverter());
                 });
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "FinServe API", Version = "v1" });
+
+                var securitySchema = new OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT"
+                };
+
+                c.AddSecurityDefinition("Bearer", securitySchema);
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        securitySchema,
+                        new[] { "Bearer" }
+                    }
+                });
+            });
+
 
             var app = builder.Build();
 
@@ -131,6 +164,13 @@ internal sealed class Program
             //    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             //    db.Database.Migrate(); // creates DB if missing and applies migrations
             //}
+
+            // SEED DATABASE
+            using (var scope = app.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                await AdminSeeder.SeedAsync(db);
+            }
 
             //if (app.Environment.IsDevelopment())
             {
@@ -197,7 +237,7 @@ internal sealed class Program
 
         var isAppStopped = ConsoleHelper.WaitConsoleForUserCommand(_stopCommand);
 
-        if(isAppStopped)
+        if (isAppStopped)
         {
             _logger.Information("{0} triggered. Stopping and Exiting application", _stopCommand);
             app.Lifetime.StopApplication();

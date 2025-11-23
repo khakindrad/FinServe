@@ -10,5 +10,6 @@ public class MenuMaster
     public int? ParentId { get; set; }
     public int Sequence { get; set; }
     public bool IsActive { get; set; } = true;
-    public List<MenuMaster> Children { get; set; } = new();
+    public List<MenuMaster> Children { get; set; } = [];
+    public ICollection<RoleMenu> RoleMenus { get; set; }
 }

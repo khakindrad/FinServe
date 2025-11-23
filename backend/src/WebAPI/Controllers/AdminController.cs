@@ -12,7 +12,7 @@ namespace WebAPI.Controllers;
 [ApiController]
 [Route("api/admin")]
 [Authorize(Roles = "Admin")]
-public class AdminController : ControllerBase
+public sealed class AdminController : ControllerBase
 {
     private readonly IUserRepository _users;
     private readonly AppDbContext _db;
@@ -137,5 +137,26 @@ public class AdminController : ControllerBase
         Log.Information("Admin {AdminEmail} unlocked user {UserEmail} (id:{UserId})", User.Identity?.Name ?? "unknown", user.Email, user.Id);
 
         return Ok(new { message = "User unlocked successfully" });
+    }
+    [HttpDelete("cleanup-reset-tokens")]
+    public async Task<IActionResult> Cleanup([FromServices] AppDbContext db)
+    {
+        var expired = db.PasswordResetTokens.Where(t => t.ExpiresAt < DateTime.UtcNow);
+        db.PasswordResetTokens.RemoveRange(expired);
+        await db.SaveChangesAsync();
+        return Ok(new { message = "Expired tokens removed." });
+    }
+    [HttpPut("approve/{id}")]
+    public async Task<IActionResult> ApproveUser(int id)
+    {
+        var user = await _users.GetByIdAsync(id);
+        if (user == null)
+            return NotFound();
+
+        user.IsApproved = true;
+        await _users.UpdateAsync(user);
+        await _users.SaveChangesAsync();
+        await _email.SendEmailAsync(user.Email, "Account approved", "Your account is approved by admin.");
+        return Ok(new { message = "Approved" });
     }
 }
