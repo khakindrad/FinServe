@@ -1,104 +1,148 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-import {
-  User,
-  Mail,
-  Phone,
-  Flag,
-  MapPin,
-  Lock,
-  Eye,
-  EyeOff,
-} from "lucide-react";
-
+import { User, Mail, Phone, Flag, MapPin, Lock, Eye, EyeOff } from "lucide-react";
 import AppAlert from "@/components/common/AppAlert";
 import { useRegistration } from "@/hooks/useRegistration";
 import { useFormMessages } from "@/hooks/useFormMessages";
 import { validateField } from "@/lib/validators";
 import { patterns } from "@/lib/patterns";
+import { api } from "@/lib/api";
 
 export default function RegisterForm() {
   const { errorMsg, setErrorMsg, successMsg, setSuccessMsg } = useFormMessages();
   const { registerUser, loading } = useRegistration(setErrorMsg, setSuccessMsg);
 
   const [showPassword, setShowPassword] = useState(false);
-
-  // Field Errors
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const [form, setForm] = useState({
+    email: "",
+    mobile: "",
+    gender: "",
+    dateOfBirth: "",
     firstName: "",
     middleName: "",
     lastName: "",
-    dob: "",
-    email: "",
-    phone: "",
-    country: "India",
-    state: "Maharashtra",
-    city: "Mumbai",
-    zip: "",
+    countryId: "",
+    stateId: "",
+    cityId: "",
+    address: "",
+    pinCode: "",
     password: "",
   });
+  // Dropdown data
+  const [gender, setGender] = useState<{ id: number; name: string }[]>([]);
+  const [countries, setCountries] = useState<{ id: string; name: string }[]>([]);
+  const [states, setStates] = useState<{ id: string; name: string }[]>([]);
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([]);
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
+  //Load Genders
+  useEffect(()=>
+  {
+     api.GetGender().then((res)=> {
+        setGender(res);
+     }).catch((err) => {
+      console.error("Error fetching Genders:", err);
+    });
+  })
+  // Load countries on mount
+  useEffect(() => {
+    api.GetCountry()
+      .then((res) => {
+        setCountries(res);
+      })
+      .catch((err) => {
+        console.error("Error fetching countries:", err);
+      });
+  }, []);
+  
+
+  // Load states when country changes
+  useEffect(() => {
+    if (!form.countryId) return;
+    api.GetState(form.countryId)
+      .then((res) => {
+        setStates(res);
+      })
+      .catch((err) => {
+        console.error("Error fetching states:", err);
+      });
+  }, [form.countryId]);
+
+  // Load cities when state changes
+  useEffect(() => {
+    if (!form.stateId) {
+      setCities([]);
+      setForm((prev) => ({ ...prev, cityId: "" }));
+      return;
+    }
+    api.GetCity(form.stateId)
+      .then((res) => setCities(res))
+      .catch(console.error);
+
+    setForm((prev) => ({ ...prev, cityId: "" }));
+  }, [form.stateId]);
+
 
   async function handleSubmit(e: any) {
     e.preventDefault();
     setErrors({});
     setErrorMsg("");
-  
+
     let newErrors: any = {};
     const validations = [
+      { field: "email", label: "Email", pattern: patterns.email },
+      { field: "mobile", label: "Phone", pattern: patterns.phone },
+      { field: "gender", label: "Gender", pattern: patterns.id },
+      { field: "dateOfBirth", label: "Date of Birth", pattern: patterns.dob },
       { field: "firstName", label: "First Name", pattern: patterns.name },
       { field: "lastName", label: "Last Name", pattern: patterns.name },
-      { field: "dob", label: "Date of Birth", pattern: patterns.dob },
-      { field: "email", label: "Email", pattern: patterns.email },
-      { field: "phone", label: "Phone", pattern: patterns.phone },
-      { field: "country", label: "Country", pattern: patterns.country },
-      { field: "state", label: "State", pattern: patterns.country },
-      { field: "city", label: "City", pattern: patterns.country },
-      { field: "zip", label: "Zip Code", pattern: patterns.pinCode },
-      { field: "password", label: "Password", pattern: patterns.strongPassword },
+      { field: "countryId", label: "Country", pattern: patterns.id},
+      { field: "stateId", label: "State", pattern: patterns.id },
+      { field: "cityId", label: "City", pattern: patterns.id},
+      { field: "pinCode", label: "Zip Code", pattern: patterns.pinCode },
+      { field: "address", label: "Full Address", pattern: patterns.address },
+      { field: "password", label: "Password", pattern: patterns.password },
     ];
+    console.log(form);
     validations.forEach(({ field, label, pattern }) => {
       const result = validateField(form[field], label, pattern);
       if (result) newErrors[field] = result;
     });
+
     const errorCount = Object.keys(newErrors).length;
     if (errorCount > 0) {
       setErrors(newErrors);
-  
       if (errorCount === 1) {
         setErrorMsg(String(Object.values(newErrors)[0]));
-      } else {
-        setErrorMsg(""); // No AppAlert for multiple errors
       }
       return;
     }
     await registerUser(form);
   }
+
   return (
     <form className="space-y-10 px-2" onSubmit={handleSubmit}>
       {errorMsg && <AppAlert type="error" message={errorMsg} />}
       {successMsg && <AppAlert type="success" message={successMsg} />}
+
       {/* PERSONAL DETAILS */}
       <section>
         <h3 className="text-xl font-semibold mb-3">Personal Details</h3>
-
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-4 gap-4">
           {/* FIRST NAME */}
           <div>
             <label className="text-sm font-medium">First Name</label>
             <div className="relative mt-1">
               <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-
               <Input
                 placeholder="John"
                 value={form.firstName}
@@ -106,9 +150,7 @@ export default function RegisterForm() {
                 className={`pl-10 ${errors.firstName ? "border-red-500" : ""}`}
               />
             </div>
-            {errors.firstName && (
-              <p className="text-xs text-red-600 mt-1">{errors.firstName}</p>
-            )}
+            {errors.firstName && <p className="text-xs text-red-600 mt-1">{errors.firstName}</p>}
           </div>
 
           {/* MIDDLE NAME */}
@@ -133,9 +175,24 @@ export default function RegisterForm() {
                 className={`pl-10 ${errors.lastName ? "border-red-500" : ""}`}
               />
             </div>
-            {errors.lastName && (
-              <p className="text-xs text-red-600 mt-1">{errors.lastName}</p>
-            )}
+            {errors.lastName && <p className="text-xs text-red-600 mt-1">{errors.lastName}</p>}
+          </div>
+
+          {/* GENDER */}
+          <div>
+            <label className="text-sm font-medium">Gender</label>
+            <select
+              className={`w-full py-2 pl-3 pr-3 border rounded-md bg-white ${errors.gender ? "border-red-500" : ""
+                }`}
+              value={form.gender}
+              onChange={(e) => updateField("gender", e.target.value)}
+            >
+              <option value="">Select Gender</option>
+              {gender.map((g: any) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
+            {errors.gender && <p className="text-xs text-red-600 mt-1">{errors.gender}</p>}
           </div>
         </div>
 
@@ -144,167 +201,155 @@ export default function RegisterForm() {
           <label className="text-sm font-medium">Date of Birth</label>
           <Input
             type="date"
-            value={form.dob}
-            onChange={(e) => updateField("dob", e.target.value)}
-            className={`${errors.dob ? "border-red-500" : ""}`}
+            value={form.dateOfBirth}
+            onChange={(e) => updateField("dateOfBirth", e.target.value)}
+            className={`${errors.dateOfBirth ? "border-red-500" : ""}`}
           />
-          {errors.dob && <p className="text-xs text-red-600 mt-1">{errors.dob}</p>}
+          {errors.dateOfBirth && <p className="text-xs text-red-600 mt-1">{errors.dateOfBirth}</p>}
         </div>
       </section>
 
       {/* CONTACT DETAILS */}
       <section>
         <h3 className="text-xl font-semibold mb-3">Contact Details</h3>
-
-        {/* EMAIL */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Email</label>
+        <div className="space-y-4">
+          {/* EMAIL */}
           <div className="relative">
-            <Mail className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <label className="text-sm font-medium">Email</label>
+            <Mail className="absolute left-3 top-9 h-5 w-5 text-gray-400" />
             <Input
               type="email"
               value={form.email}
               onChange={(e) => updateField("email", e.target.value)}
               className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
             />
+            {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
           </div>
-          {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
-        </div>
 
-        {/* PHONE */}
-        <div className="mt-4 space-y-2">
-          <label className="text-sm font-medium">Phone Number</label>
+          {/* PHONE */}
           <div className="relative">
-            <Phone className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
+            <label className="text-sm font-medium">Phone Number</label>
+            <Phone className="absolute left-3 top-9 h-5 w-5 text-gray-400" />
             <Input
               type="tel"
-              value={form.phone}
-              onChange={(e) => updateField("phone", e.target.value)}
-              className={`pl-10 ${errors.phone ? "border-red-500" : ""}`}
+              value={form.mobile}
+              onChange={(e) => updateField("mobile", e.target.value)}
+              className={`pl-10 ${errors.mobile ? "border-red-500" : ""}`}
             />
+            {errors.mobile && <p className="text-xs text-red-600 mt-1">{errors.mobile}</p>}
           </div>
-          {errors.phone && <p className="text-xs text-red-600">{errors.phone}</p>}
         </div>
       </section>
 
       {/* ADDRESS DETAILS */}
       <section>
         <h3 className="text-xl font-semibold mb-3">Address Details</h3>
+        <div className="mt-4">
+          <label className="text-sm font-medium">Full Address</label>
+          <div className="relative mt-1">
+            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <Input
+              placeholder="Xyz near abc."
+              value={form.address}
+              onChange={(e) => updateField("address", e.target.value)}
+              className={`pl-10 ${errors.address ? "border-red-500" : ""}`}
+            />
+          </div>
+          {errors.address && <p className="text-xs text-red-600 mt-1">{errors.address}</p>}
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-
+        <div className="grid md:grid-cols-3 gap-4 mt-4">
           {/* COUNTRY */}
-          <div>
+          {/* COUNTRY */}
+          <div className="mt-4">
             <label className="text-sm font-medium">Country</label>
-            <div className="relative mt-1">
-              <Flag className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-              <select
-                className={`w-full pl-10 pr-3 py-2 border rounded-md bg-white ${
-                  errors.country ? "border-red-500" : ""
-                }`}
-                value={form.country}
-                onChange={(e) => updateField("country", e.target.value)}
-              >
-                <option>India</option>
-                <option>Nepal</option>
-                <option>USA</option>
-                <option>Canada</option>
-              </select>
-            </div>
-            {errors.country && (
-              <p className="text-xs text-red-600">{errors.country}</p>
-            )}
+            <select
+              className={`w-full py-2 pl-3 pr-3 border rounded-md bg-white ${errors.countryId ? "border-red-500" : ""}`}
+              value={form.countryId}
+              onChange={(e) => updateField("countryId", e.target.value)}
+            >
+              <option value="">Select Country</option>
+              {countries.map((c: any) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+            {errors.countryId && <p className="text-xs text-red-600 mt-1">{errors.countryId}</p>}
           </div>
 
           {/* STATE */}
-          <div>
+          <div className="mt-4">
             <label className="text-sm font-medium">State</label>
             <select
-              className={`w-full mt-1 py-2 border rounded-md bg-white ${
-                errors.state ? "border-red-500" : ""
-              }`}
-              value={form.state}
-              onChange={(e) => updateField("state", e.target.value)}
+              className={`w-full py-2 pl-3 pr-3 border rounded-md bg-white ${errors.stateId ? "border-red-500" : ""}`}
+              value={form.stateId}
+              onChange={(e) => updateField("stateId", e.target.value)}
+              disabled={!states.length}
             >
-              <option>Maharashtra</option>
-              <option>Karnataka</option>
-              <option>Delhi</option>
+              <option value="">Select State</option>
+              {states.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
             </select>
-            {errors.state && (
-              <p className="text-xs text-red-600">{errors.state}</p>
-            )}
+            {errors.stateId && <p className="text-xs text-red-600 mt-1">{errors.stateId}</p>}
           </div>
 
           {/* CITY */}
-          <div>
+          <div className="mt-4">
             <label className="text-sm font-medium">City</label>
             <select
-              className={`w-full mt-1 py-2 border rounded-md bg-white ${
-                errors.city ? "border-red-500" : ""
-              }`}
-              value={form.city}
-              onChange={(e) => updateField("city", e.target.value)}
+              className={`w-full py-2 pl-3 pr-3 border rounded-md bg-white ${errors.cityId ? "border-red-500" : ""}`}
+              value={form.cityId}
+              onChange={(e) => updateField("cityId", e.target.value)}
+              disabled={!cities.length}
             >
-              <option>Mumbai</option>
-              <option>Bangalore</option>
-              <option>Delhi</option>
+              <option value="">Select City</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
-            {errors.city && (
-              <p className="text-xs text-red-600">{errors.city}</p>
-            )}
+            {errors.cityId && <p className="text-xs text-red-600 mt-1">{errors.cityId}</p>}
           </div>
         </div>
 
         {/* ZIP */}
         <div className="mt-4">
           <label className="text-sm font-medium">Zip Code</label>
-          <div className="relative mt-1">
-            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <Input
-              placeholder="400001"
-              value={form.zip}
-              onChange={(e) => updateField("zip", e.target.value)}
-              className={`pl-10 ${errors.zip ? "border-red-500" : ""}`}
-            />
-          </div>
-          {errors.zip && <p className="text-xs text-red-600">{errors.zip}</p>}
+          <Input
+            placeholder="400001"
+            value={form.pinCode}
+            onChange={(e) => updateField("pinCode", e.target.value)}
+            className={`w-full py-2 pl-3 pr-3 border rounded-md ${errors.pinCode ? "border-red-500" : ""
+              }`}
+          />
+          {errors.pinCode && <p className="text-xs text-red-600 mt-1">{errors.pinCode}</p>}
         </div>
       </section>
 
       {/* SECURITY */}
       <section>
         <h3 className="text-xl font-semibold mb-3">Security</h3>
-
-        <div className="space-y-2">
+        <div className="relative">
           <label className="text-sm font-medium">Password</label>
-          <div className="relative">
-            <Lock className="absolute left-3 top-3.5 h-5 w-5 text-gray-400" />
-
-            <Input
-              type={showPassword ? "text" : "password"}
-              value={form.password}
-              onChange={(e) => updateField("password", e.target.value)}
-              className={`pl-10 pr-12 ${
-                errors.password ? "border-red-500" : ""
-              }`}
-              placeholder="••••••••"
-            />
-
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3 text-gray-500 hover:text-gray-700"
-            >
-              {showPassword ? (
-                <EyeOff className="h-5 w-5" />
-              ) : (
-                <Eye className="h-5 w-5" />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="text-xs text-red-600">{errors.password}</p>
-          )}
+          <Lock className="absolute left-3 top-9 h-5 w-5 text-gray-400" />
+          <Input
+            type={showPassword ? "text" : "password"}
+            value={form.password}
+            onChange={(e) => updateField("password", e.target.value)}
+            className={`pl-10 pr-12 ${errors.password ? "border-red-500" : ""}`}
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-9 text-gray-500 hover:text-gray-700"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+          {errors.password && <p className="text-xs text-red-600 mt-1">{errors.password}</p>}
         </div>
       </section>
 

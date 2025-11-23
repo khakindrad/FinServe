@@ -110,11 +110,11 @@ public sealed class AuthController : ControllerBase
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
+        //await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
 
-        var adminEmail = _config["Admin:NotificationEmail"];
-        if (!string.IsNullOrEmpty(adminEmail)) 
-            await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
+        //var adminEmail = _config["Admin:NotificationEmail"];
+        //if (!string.IsNullOrEmpty(adminEmail)) 
+        //    await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
 
         return Ok(new { message = "Registered. Verify email & mobile and wait for admin approval.", userId = user.Id });
     }

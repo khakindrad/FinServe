@@ -15,54 +15,24 @@ export function useRegistration(setErrorMsg: any, setSuccessMsg: any) {
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
-
-    let errors: string[] = [];
-
-    // ***** VALIDATION *****
-    const validations = [
-      validateField(form.firstName, "First Name", patterns.name),
-      validateField(form.lastName, "Last Name", patterns.name),
-      validateField(form.email, "Email", patterns.email),
-      validateField(form.password, "Password", patterns.strongPassword),
-      validateField(form.phone, "Phone", patterns.phone),
-      validateField(form.dob, "Date of Birth", patterns.dob),
-      validateField(form.country, "Country", patterns.country),
-      validateField(form.state, "State", patterns.country),
-      validateField(form.city, "City", patterns.country),
-      validateField(form.zip, "Zip Code", patterns.pinCode),
-    ];
-
-    validations.forEach((v) => {
-      if (v) errors.push(v);
-    });
-
-    // Show all errors in alert
-    if (errors.length > 0) {
-      setErrorMsg(errors.join("\n"));
-      setLoading(false);
-      return;
-    }
-
     try {
-      // ***** API REQUEST *****
       const payload = {
-        firstName: form.firstName.trim(),
-        middleName: form.middleName.trim(),
-        lastName: form.lastName.trim(),
-        dob: form.dob,
         email: form.email.trim(),
-        phone: form.phone.trim(),
-        country: form.country,
-        state: form.state,
-        city: form.city,
-        zip: form.zip.trim(),
+        mobile: form.mobile.trim(),
+        gender: form.gender === "M" ? "Male" : form.gender === "F" ? "Female" : "Other", // matches enum Gender
+        dateOfBirth: form.dateOfBirth, // DateOnly string, e.g., "2025-11-23"
+        firstName: form.firstName.trim(),
+        middleName: form.middleName ? form.middleName.trim() : null, // optional
+        lastName: form.lastName.trim(),
+        countryId: Number(form.countryId), // must be numeric ID
+        stateId: Number(form.stateId),     // must be numeric ID
+        cityId: Number(form.cityId),       // must be numeric ID
+        address: form.address.trim(),
+        pinCode: form.pinCode.trim(),
         password: form.password,
       };
-
       await api.register(payload); // <-- IMPORTANT: Correct API call
-
       setSuccessMsg("Account created successfully!");
-
       // Redirect after short delay
       setTimeout(() => {
         router.push("/login");
@@ -70,9 +40,7 @@ export function useRegistration(setErrorMsg: any, setSuccessMsg: any) {
     } catch (err: any) {
       setErrorMsg(err.message || "Something went wrong, please try later.");
     }
-
     setLoading(false);
   }
-
   return { registerUser, loading };
 }

@@ -116,5 +116,6 @@ export const patterns = {
   // ✔ 01/01/2000
   // ✔ 29/02/2004 (valid leap year)
   dob: /^(19|20)\d\d-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/,
-  country:/^[A-Za-z ]+$/
+  country:/^[A-Za-z ]+$/,
+  id:/^[a-zA-Z0-9]{1,10}$/
 };

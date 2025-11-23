@@ -22,26 +22,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Initialize user on page load
   useEffect(() => {
-    async function load() {
+    const fetchUser = async () => {
       try {
-        const res = await api.me(); // backend checks refresh token cookie
-
-        if (res?.user) {
-          setUser(res.user);
-          setIsAuthenticated(true);
-        } else {
-          setUser(null);
-          setIsAuthenticated(false);
-        }
-      } catch (err) {
+        const res = await api.me(); // backend returns current user using refreshToken if needed
+        setUser(res.data);
+      } catch {
         setUser(null);
-        setIsAuthenticated(false);
       }
-    }
-
-    load();
+    };
+    fetchUser();
   }, []);
+  
   // ⭐ FIX → UPDATE AUTH WHEN USER CHANGES
   useEffect(() => {
     setIsAuthenticated(!!user);

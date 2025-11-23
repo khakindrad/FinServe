@@ -3,7 +3,7 @@ import { getAccessToken, setAccessToken, clearAccessToken } from "./auth";
 import { refreshAccessToken } from "./refreshClient";
 import { normalizeHeaders } from "./utils";
 
-export const API_BASE_URL = "https://tzrhqvey9d.execute-api.us-east-1.amazonaws.com/prod/api";
+export const API_BASE_URL = "https://localhost:5005/api";
 
 // -----------------------------
 // RAW REQUEST (no retry logic)
@@ -11,9 +11,9 @@ export const API_BASE_URL = "https://tzrhqvey9d.execute-api.us-east-1.amazonaws.
 async function rawRequest(path: string, options: RequestInit = {}) {
   const token = getAccessToken();
   const baseHeaders: Record<string, string> = {
-    "Content-Type": "application/json",
     ...normalizeHeaders(options.headers || {}),
   };
+  baseHeaders["Content-Type"] = "application/json";
   if (token) {
     baseHeaders["Authorization"] = `Bearer ${token}`;
   }
@@ -30,10 +30,19 @@ async function rawRequest(path: string, options: RequestInit = {}) {
 // MAIN REQUEST WRAPPER
 // -----------------------------
 async function request(path: string, options: RequestInit = {}) {
-
-  // 1) Try first call normally
   let res = await rawRequest(path, options);
-
+  // 403 → Forbidden (capture message)
+  if (res.status === 403) {
+    let errMsg = "Account not approved or account lock";
+    try {
+      errMsg = await res.text();
+    } catch {
+      try {
+        errMsg = await res.text(); // fallback if backend sends plain text
+      } catch { }
+    }
+    throw new Error(errMsg);
+  }
   // 2) If unauthorized → try refreshing access token
   if (res.status === 401) {
     const newToken = await refreshAccessToken();
@@ -46,23 +55,15 @@ async function request(path: string, options: RequestInit = {}) {
       throw new Error("Session expired. Please login again.");
     }
   }
-
   // 3) If still NOT OK → throw error
   if (!res.ok) {
-    let errJson: any = null;
-
+    let errMsg = `Request failed: ${res.status}`;
     try {
-      errJson = await res.json();
+      const errJson = await res.json();
+      errMsg = errJson?.message || errJson?.error || errMsg;
     } catch { }
-
-    const message =
-      errJson?.message ||
-      errJson?.error ||
-      `Request failed: ${res.status}`;
-
-    throw new Error(message);
+    throw new Error(errMsg);
   }
-
   // 4) Return JSON
   try {
     return await res.json();
@@ -70,7 +71,6 @@ async function request(path: string, options: RequestInit = {}) {
     return null; // no body
   }
 }
-
 // -----------------------------
 // EXPORT API METHODS
 // -----------------------------
@@ -87,7 +87,7 @@ export const api = {
     }),
 
   me: () =>
-    request("/Auth/me", {
+    request("/User/profile", {
       method: "GET",
     }),
 
@@ -146,5 +146,30 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
+  /*
+       ------------------------------API for Registration-----------------------------------------
+*/
+  GetCountry: () =>
+    request("/location/countries", {
+      method: "GET",
+    }),
+
+  // Get states by countryId
+  GetState: (countryId: string | number) =>
+    request(`/location/states/${countryId}`, {
+      method: "GET",
+    }),
+
+  // Get cities by stateId
+  GetCity: (stateId: string | number) =>
+    request(`/location/cities/${stateId}`, {
+      method: "GET",
+    }),
+
+  //Get Genders for registration
+  GetGender: () =>
+    request("/Master/genders", {
+      method: "GET",
+    }),
 };
 
