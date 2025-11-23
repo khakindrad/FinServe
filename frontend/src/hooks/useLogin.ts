@@ -37,7 +37,7 @@ export function useLogin(setErrorMsg: (m: string) => void, setSuccessMsg: (m: st
       }
       setSuccessMsg("Login successful");
       const isAdmin = res?.user?.role?.includes?.("Admin") ?? false;
-      router.push(isAdmin ? "/admin/dashboard" : "/User/dashboard");
+      router.push(isAdmin ? "/admin/dashboard" : "/admin/dashboard");
     } catch (err: any) {
       setErrorMsg(err?.message || "Invalid credentials");
     } finally {

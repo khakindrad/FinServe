@@ -1,10 +1,9 @@
-// context/AuthContext.tsx
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { clearAccessToken } from "@/lib/auth";
-import { useInitAuth } from "@/hooks/useInitAuth";
+
 type AuthContextType = {
   user: any | null;
   isAuthenticated: boolean;
@@ -15,21 +14,20 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
-  setUser: () => {},
-  logout: async () => {},
+  setUser: () => { },
+  logout: async () => { },
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  useInitAuth();
   const [user, setUser] = useState<any | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // try to load current user. api.me() will send cookies
     async function load() {
       try {
-        const res = await api.me();
-        if (res && res.user) {
+        const res = await api.me(); // backend checks refresh token cookie
+
+        if (res?.user) {
           setUser(res.user);
           setIsAuthenticated(true);
         } else {
@@ -44,18 +42,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     load();
   }, []);
+  // ⭐ FIX → UPDATE AUTH WHEN USER CHANGES
+  useEffect(() => {
+    setIsAuthenticated(!!user);
+  }, [user]);
 
+  
   async function logout() {
     try {
-      await api.logout(); // backend should clear cookie
-    } catch (err) {
-      // ignore
-    } finally {
-      clearAccessToken();
-      setUser(null);
-      setIsAuthenticated(false);
-      // navigate to login - let consumer handle redirect or use router
-      if (typeof window !== "undefined") window.location.href = "/login";
+      await api.logout(); // backend clears cookie
+    } catch { }
+
+    clearAccessToken();
+    setUser(null);
+    setIsAuthenticated(false);
+
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
   }
 

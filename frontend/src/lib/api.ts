@@ -53,7 +53,7 @@ async function request(path: string, options: RequestInit = {}) {
 
     try {
       errJson = await res.json();
-    } catch {}
+    } catch { }
 
     const message =
       errJson?.message ||
@@ -75,35 +75,76 @@ async function request(path: string, options: RequestInit = {}) {
 // EXPORT API METHODS
 // -----------------------------
 export const api = {
-  // LOGIN
+
+  /*
+         ------------------------------Auth-----------------------------------------
+  */
+
   login: (data: any) =>
     request("/Auth/login", {
       method: "POST",
       body: JSON.stringify(data),
     }),
 
-  // GET CURRENT USER
   me: () =>
     request("/Auth/me", {
       method: "GET",
     }),
 
-  // LOGOUT
   logout: () =>
     request("/Auth/logout", {
       method: "POST",
     }),
-  refresh: () => 
-    request("/Auth/refresh", { 
-      method: "POST", 
+
+  refresh: () =>
+    request("/Auth/refresh", {
+      method: "POST",
     }),
-    forgotPassword: () => 
-    request("/Auth/forgot-password", { 
-      method: "POST", 
+
+  forgotPassword: () =>
+    request("/Auth/forgot-password", {
+      method: "POST",
     }),
-    register: (payload) => 
-    request("/Auth/register", { 
-      method: "POST", 
+
+  register: (data: any) =>
+    request("/Auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
+
+  /*
+         ------------------------------User-----------------------------------------
+  */
+  getRoles: () =>
+    request("/User/roles", { method: "GET" }),
+
+  getModules: () =>
+    request("/User/modules", { method: "GET" }),
+
+  getMenu: () =>
+    request("/User/Getmenu", {
+      method: "GET",
+    }),
+  /*
+         ------------------------------Admin-----------------------------------------
+  */
+  getLastModuleOrder: () =>
+    request("/Admin/GetModulorder", { method: "GET" }),
+
+  addModule: (payload: any) =>
+    request("/Admin/Addmodules", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getLastActivityOrder: () =>
+    request("/Admin/GetActivityOrder", { method: "GET" }),
+
+  addActivity: (payload: any) =>
+    request("/Admin/AddActivities", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
 };
 

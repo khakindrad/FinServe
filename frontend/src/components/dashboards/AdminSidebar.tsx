@@ -1,68 +1,22 @@
-"use client";
-
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogOut, Users, UserCog, Truck, BarChart3 } from "lucide-react";
+import { useAdminMenu } from "@/hooks/useAdminMenu";
 
-import {
-  Users,
-  UserCog,
-  BadgeCheck,
-  Store,
-  Truck,
-  BarChart3,
-  Settings,
-  LogOut
-} from "lucide-react";
+const ICONS: { [key: string]: any } = { Users, UserCog, Truck, BarChart3 };
 
 export default function AdminSidebar() {
   const { user, logout } = useAuth();
+  const { menu, loading } = useAdminMenu();
 
   const initials = user?.fullName
     ?.split(" ")
     .map((w: string) => w[0])
     .join("")
     .toUpperCase();
-
-  const adminMenu = [
-    {
-      label: "User Management",
-      children: [
-        { name: "Approve Users", href: "/admin/users/approve" },
-        { name: "Block Users", href: "/admin/users/block" },
-        { name: "Activate Users", href: "/admin/users/activate" },
-        { name: "Inactivate Users", href: "/admin/users/inactivate" },
-        { name: "User Details", href: "/admin/users/details" },
-      ],
-      icon: Users,
-    },
-    {
-      label: "Employee Management",
-      children: [
-        { name: "Approve Employees", href: "/admin/employees/approve" },
-        { name: "Block Employees", href: "/admin/employees/block" },
-        { name: "Employee Details", href: "/admin/employees/details" },
-      ],
-      icon: UserCog,
-    },
-    {
-      label: "Sales",
-      children: [
-        { name: "Sales Overview", href: "/admin/sales" },
-        { name: "Revenue Reports", href: "/admin/sales/reports" },
-      ],
-      icon: BarChart3,
-    },
-    {
-      label: "Vehicles",
-      children: [
-        { name: "Listed Vehicles", href: "/admin/vehicles" },
-        { name: "Pending Approval", href: "/admin/vehicles/pending" },
-      ],
-      icon: Truck,
-    },
-  ];
+  if (loading) return <p className="p-6">Loading menu...</p>;
 
   return (
     <div className="p-6 flex flex-col h-full justify-between">
@@ -78,8 +32,8 @@ export default function AdminSidebar() {
         </div>
 
         <div className="space-y-6">
-          {adminMenu.map((group, idx) => {
-            const Icon = group.icon;
+          {menu.map((group, idx) => {
+            const Icon = ICONS[group.icon] || Users;
             return (
               <div key={idx}>
                 <p className="text-gray-600 text-sm mb-2 flex items-center gap-2">
@@ -87,7 +41,7 @@ export default function AdminSidebar() {
                 </p>
 
                 <div className="space-y-1 ml-4">
-                  {group.children.map((item, i) => (
+                  {group.children.map((item: any, i: number) => (
                     <Link key={i} href={item.href}>
                       <Button
                         variant="ghost"
@@ -103,13 +57,6 @@ export default function AdminSidebar() {
           })}
         </div>
       </div>
-
-      <Button
-        onClick={logout}
-        className="w-full bg-red-600 hover:bg-red-700 text-white rounded-xl"
-      >
-        <LogOut size={18} className="mr-2" /> Logout
-      </Button>
     </div>
   );
 }
