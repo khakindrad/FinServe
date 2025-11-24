@@ -4,27 +4,32 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
-
+import { Mail, Lock, Eye, EyeOff, Navigation } from "lucide-react";
 import AppAlert from "@/components/common/AppAlert";
 import { useFormMessages } from "@/hooks/useFormMessages";
 import { useLogin } from "@/hooks/useLogin";
 import { validateField } from "@/lib/validators";
 import { patterns } from "@/lib/patterns";
+import { useRouter } from "next/navigation";
+
 
 export default function LoginForm() {
+
+  const router = useRouter();
   const { errorMsg, setErrorMsg, successMsg, setSuccessMsg } = useFormMessages();
   const { login, loading } = useLogin(setErrorMsg, setSuccessMsg);
-
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
 
   function updateField(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
   }
 
-  function handleSubmit(e: any) {
+  //Form Submitting
+  async function handleSubmit(e: any) {
+
     e.preventDefault();
     setErrorMsg("");
     setErrors({});
@@ -45,13 +50,18 @@ export default function LoginForm() {
       if (Object.keys(newErrors).length === 1) {
         setErrorMsg(Object.values(newErrors)[0] as string);
       } else {
-        setErrorMsg(""); // only inline errors
+        setErrorMsg(""); 
       }
       return;
     }
-    login(form.email, form.password);
-  }
 
+    const roles=await login(form.email, form.password);
+    if(roles)
+    {
+      const isAdmin = roles.includes("Admin");
+      router.push(isAdmin ? "/admin/dashboard" : "/User/dashboard");
+    }
+  }
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {errorMsg && <AppAlert type="error" message={errorMsg} />}

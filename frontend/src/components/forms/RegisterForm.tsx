@@ -12,8 +12,10 @@ import { useFormMessages } from "@/hooks/useFormMessages";
 import { validateField } from "@/lib/validators";
 import { patterns } from "@/lib/patterns";
 import { api } from "@/lib/api";
-
+import { useRouter } from "next/navigation";
 export default function RegisterForm() {
+  
+  const router = useRouter();
   const { errorMsg, setErrorMsg, successMsg, setSuccessMsg } = useFormMessages();
   const { registerUser, loading } = useRegistration(setErrorMsg, setSuccessMsg);
 
@@ -48,7 +50,7 @@ export default function RegisterForm() {
   useEffect(()=>
   {
      api.GetGender().then((res)=> {
-        setGender(res);
+        setGender(res.data);
      }).catch((err) => {
       console.error("Error fetching Genders:", err);
     });
@@ -57,7 +59,7 @@ export default function RegisterForm() {
   useEffect(() => {
     api.GetCountry()
       .then((res) => {
-        setCountries(res);
+        setCountries(res.data);
       })
       .catch((err) => {
         console.error("Error fetching countries:", err);
@@ -70,7 +72,7 @@ export default function RegisterForm() {
     if (!form.countryId) return;
     api.GetState(form.countryId)
       .then((res) => {
-        setStates(res);
+        setStates(res.data);
       })
       .catch((err) => {
         console.error("Error fetching states:", err);
@@ -85,7 +87,7 @@ export default function RegisterForm() {
       return;
     }
     api.GetCity(form.stateId)
-      .then((res) => setCities(res))
+      .then((res) => setCities(res.data))
       .catch(console.error);
 
     setForm((prev) => ({ ...prev, cityId: "" }));
@@ -126,7 +128,11 @@ export default function RegisterForm() {
       }
       return;
     }
-    await registerUser(form);
+    const res=await registerUser(form);
+    if(res)
+    {
+      router.push("/login");
+    }
   }
 
   return (

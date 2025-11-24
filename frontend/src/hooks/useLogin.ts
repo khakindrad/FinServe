@@ -15,31 +15,24 @@ export function useLogin(setErrorMsg: (m: string) => void, setSuccessMsg: (m: st
   async function login(email: string, password: string) {
     setLoading(true);
     setErrorMsg("");
-
     try {
-      // login must be called with credentials (cookie)
       const res = await api.login({ email, password });
-
-      // EXPECTED BACKEND BEHAVIOR:
-      // 1) backend sets HttpOnly refresh cookie
-      // 2) backend may return { user, accessToken } or just { user }
-      // If accessToken exists, store in memory:
-      if (res?.accessToken) {
-        setAccessToken(res.accessToken);
+      if(res.statusCode===200)
+      {
+        if (res?.accessToken) {
+          setAccessToken(res.data.accessToken);
+        }
+        if (res?.data.user) {
+          setUser(res.data.user);
+        } 
+        if(res?.message)
+        {
+          setSuccessMsg(res.message);
+        }
+        return res.data.user.roles;
       }
-
-      if (res?.user) {
-        setUser(res.user);
-      } else {
-        // optionally call api.me() to populate
-        const me = await api.me();
-        if (me?.user) setUser(me.user);
-      }
-      setSuccessMsg("Login successful");
-      const isAdmin = res?.user?.role?.includes?.("Admin") ?? false;
-      router.push(isAdmin ? "/admin/dashboard" : "/admin/dashboard");
     } catch (err: any) {
-      setErrorMsg(err?.message || "Invalid credentials");
+      setErrorMsg(err?.message || "Something went wrong, Please Try again later.");
     } finally {
       setLoading(false);
     }
