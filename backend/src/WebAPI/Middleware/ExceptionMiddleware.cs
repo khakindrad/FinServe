@@ -1,9 +1,10 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using Application.Dtos;
 using Serilog;
+using System.Net;
+using System.Text.Json;
 
 namespace WebAPI.Middleware;
-public class ExceptionMiddleware
+public sealed class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly Serilog.ILogger _logger;
@@ -27,12 +28,21 @@ public class ExceptionMiddleware
         }
     }
 
-    private static Task HandleExceptionAsync(HttpContext context, Exception ex)
+    private async Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
-        var code = HttpStatusCode.InternalServerError;
-        var result = JsonSerializer.Serialize(new { error = "An error occurred while processing your request.", details = ex.Message });
+        var statusCode = HttpStatusCode.InternalServerError;
+
+        var response = new ApiResponse<string>(
+            statusCode,
+            "An unexpected error occurred",
+            ex.Message
+        );
+
+        context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)code;
-        return context.Response.WriteAsync(result);
+
+        var json = JsonSerializer.Serialize(response);
+
+        await context.Response.WriteAsync(json);
     }
 }

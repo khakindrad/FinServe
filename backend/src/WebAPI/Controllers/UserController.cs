@@ -8,7 +8,7 @@ namespace WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserController : ControllerBase
+public sealed class UserController : BaseController
 {
     private readonly IUserRepository _users;
     private readonly ILogger<UserController> _logger;
@@ -23,13 +23,13 @@ public class UserController : ControllerBase
     // GET /api/user/profile
     // =======================
     [HttpGet("profile")]
-    public async Task<ActionResult<UserProfileDto>> GetProfile()
+    public async Task<IActionResult> GetProfile()
     {
         var userId = GetCurrentUserId();
         var user = await _users.GetByIdAsync(userId);
 
         if (user == null)
-            return NotFound(new { message = "User not found" });
+            return NotFound("User not found.");
 
         var profile = new UserProfileDto
         {
@@ -66,7 +66,7 @@ public class UserController : ControllerBase
         var user = await _users.GetByIdAsync(userId);
 
         if (user == null)
-            return NotFound(new { message = "User not found" });
+            return NotFound("User not found.");
 
         // Basic info
         user.FirstName = dto.FirstName;
@@ -88,7 +88,7 @@ public class UserController : ControllerBase
 
         _logger.LogInformation("User {UserId} updated profile successfully", userId);
 
-        return Ok(new { message = "Profile updated successfully" });
+        return Ok("Profile updated successfully.");
     }
 
     // Helper method

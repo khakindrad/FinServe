@@ -6,10 +6,10 @@ namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MasterController : ControllerBase
+public class MasterController : BaseController
 {
     [HttpGet("genders")]
-    public IActionResult GetGenders()
+    public async Task<IActionResult> GetGenders()
     {
         var genders = Enum.GetValues(typeof(Gender))
             .Cast<Gender>()

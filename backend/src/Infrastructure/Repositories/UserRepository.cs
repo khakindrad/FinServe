@@ -38,7 +38,22 @@ public class UserRepository : IUserRepository
             .Include(u => u.City)
             .FirstOrDefaultAsync(u => u.Id == id);
     }
-    public async Task<IEnumerable<User>> GetPendingApprovalsAsync() => await _db.Users.Include(u => u.UserRoles).Where(u => !u.IsApproved).ToListAsync();
+    public async Task<IEnumerable<User>> GetUsersAsync() 
+        => await _db.Users
+        .Include(u => u.Country)
+        .Include(u => u.State)
+        .Include(u => u.City)
+        .Include(u => u.UserRoles)
+        .ThenInclude(ur => ur.Role)
+        .ToListAsync();
+    public async Task<IEnumerable<User>> GetPendingApprovalsAsync() 
+        => await _db.Users
+        .Include(u => u.Country)
+        .Include(u => u.State)
+        .Include(u => u.City)
+        .Include(u => u.UserRoles)
+        .ThenInclude(ur => ur.Role)
+        .Where(u => !u.IsApproved).ToListAsync();
     public async Task UpdateAsync(User user) => _db.Users.Update(user);
     public async Task SaveChangesAsync() => await _db.SaveChangesAsync();
 }

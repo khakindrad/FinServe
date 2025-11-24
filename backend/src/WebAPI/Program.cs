@@ -5,11 +5,13 @@ using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Debugging;
 using System.Runtime;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 using WebAPI.HostedServices;
@@ -106,8 +108,8 @@ internal sealed class Program
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = builder.Configuration["Jwt:Issuer"],
                         ValidAudience = builder.Configuration["Jwt:Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
+                        RoleClaimType = ClaimTypes.Role,
                     };
                 });
 
@@ -118,13 +120,14 @@ internal sealed class Program
                 {
                     o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                     //o.JsonSerializerOptions.Converters.Add(new DateOnlyConverter());
+                    o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "FinServe API", Version = "v1" });
 
-                var securitySchema = new OpenApiSecurityScheme
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\"",
                     Name = "Authorization",
@@ -132,19 +135,23 @@ internal sealed class Program
                     Type = SecuritySchemeType.Http,
                     Scheme = "bearer",
                     BearerFormat = "JWT"
-                };
-
-                c.AddSecurityDefinition("Bearer", securitySchema);
+                });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
-                        securitySchema,
-                        new[] { "Bearer" }
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        },
+                        Array.Empty<string>()
                     }
                 });
             });
-
 
             var app = builder.Build();
 

@@ -17,7 +17,7 @@ namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class AuthController : ControllerBase
+public sealed class AuthController : BaseController
 {
     private readonly AppDbContext _db;
     private readonly IUserRepository _users;
@@ -36,18 +36,18 @@ public sealed class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password)) 
+        if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
             return BadRequest("Email/password required");
 
         var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
         var (valid, message) = policy.ValidatePassword(dto.Password);
         if (!valid)
-            return BadRequest(new { message });
+            return BadRequest(message);
 
         var existing = await _users.GetByEmailAsync(dto.Email);
 
-        if (existing != null) 
-            return BadRequest("Email exists");
+        if (existing != null)
+            return BadRequest("Email already exists");
 
         var hasher = new PasswordHasher<User>();
 
@@ -110,13 +110,29 @@ public sealed class AuthController : ControllerBase
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        //await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
+        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
 
-        //var adminEmail = _config["Admin:NotificationEmail"];
-        //if (!string.IsNullOrEmpty(adminEmail)) 
-        //    await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
+        var adminEmail = _config["Admin:NotificationEmail"];
+        if (!string.IsNullOrEmpty(adminEmail))
+            await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
 
-        return Ok(new { message = "Registered. Verify email & mobile and wait for admin approval.", userId = user.Id });
+        var registerResponseDto = new RegisterResponseDto
+        {
+            Email = dto.Email,
+            Mobile = dto.Mobile,
+            Gender = dto.Gender,
+            DateOfBirth = dto.DateOfBirth,
+            FirstName = dto.FirstName,
+            MiddleName = dto.MiddleName,
+            LastName = dto.LastName,
+            CountryId = dto.CountryId,
+            CityId = dto.CityId,
+            StateId = dto.StateId,
+            Address = dto.Address,
+            PinCode = dto.PinCode,            
+        };
+
+        return Created(registerResponseDto, "Registered. Verify email & mobile and wait for admin approval.");
     }
 
     [HttpGet("verify-email")]
@@ -153,11 +169,13 @@ public sealed class AuthController : ControllerBase
         int userId = verifyMobileDto.UserId; 
         var user = await _users.GetByIdAsync(userId); 
         if (user == null) 
-            return NotFound(); 
+            return NotFound("User not found."); 
+
         user.MobileVerified = true; 
         await _users.UpdateAsync(user); 
         await _users.SaveChangesAsync(); 
-        return Ok(new { message = "Mobile verified" }); 
+
+        return Ok("Mobile verified."); 
     }
 
     [HttpPost("login")]
@@ -165,16 +183,16 @@ public sealed class AuthController : ControllerBase
     {
         var user = await _users.GetByEmailAsync(dto.Email);
         if (user == null)
-            return Unauthorized();
+            return NotFound("User not found.");
 
         if (!user.IsApproved)
-            return Forbid("User not approved");
+            return Forbid("User not approved.");
 
         if (!user.EmailVerified || !user.MobileVerified)
-            return Forbid("Email and mobile must be verified");
+            return Forbid("Email and mobile must be verified.");
 
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow)
-            return Forbid("Account locked");
+            return Forbid("Account locked.");
 
         var hasher = new PasswordHasher<User>();
 
@@ -188,7 +206,7 @@ public sealed class AuthController : ControllerBase
             }
             await _users.UpdateAsync(user);
             await _users.SaveChangesAsync();
-            return Unauthorized("Invalid credentials");
+            return Unauthorized("Invalid credentials.");
         }
 
         user.FailedLoginCount = 0;
@@ -218,14 +236,19 @@ public sealed class AuthController : ControllerBase
         // Use refresh.Token here
         Response.Cookies.Append("refreshToken", refresh.Token, cookieOptions);
 
-        return Ok(new LoginResponseDto
-        {
-            Id = user.Id,
-            FullName = user.FullName,
-            Email = user.Email,
-            Roles = user.UserRoles
-            .Select(ur => ur.Role.Name).ToList(),
-        });
+        return Ok("Login successful.",
+            new LoginResponseDto
+            {
+                AccessToken = accessToken,
+                User = new LoginResponseUserDto
+                {
+                    Id = user.Id,
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    ProfileImageUrl = user.ProfileImageUrl,
+                    Roles = user.UserRoles.Select(r => r.Role.Name)?.ToList(),                    
+                }
+            });
     }
 
     [HttpGet("refresh")]
@@ -234,12 +257,12 @@ public sealed class AuthController : ControllerBase
     {
         string? refreshToken = Request.Cookies["refreshToken"];
         if (string.IsNullOrEmpty(refreshToken))
-            return Unauthorized(new { message = "Refresh token missing" });
+            return Unauthorized("Refresh token missing.");
 
         var rt = await _rtService.GetValidRefreshTokenAsync(refreshToken);
 
         if (rt == null)
-            return Unauthorized(new { message = "Invalid refresh token" });
+            return Unauthorized("Invalid refresh token.");
 
         var newRt = await _rtService.CreateRefreshTokenAsync(rt.UserId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", 30);
 
@@ -248,7 +271,7 @@ public sealed class AuthController : ControllerBase
         var user = await _users.GetByIdAsync(rt.UserId);
 
         if (user == null)
-            return Unauthorized(new { message = "User not found" });
+            return Unauthorized("User not found.");
 
         var accessToken = GenerateJwt(user);
         Response.Cookies.Append(
@@ -290,7 +313,7 @@ public sealed class AuthController : ControllerBase
             SameSite = SameSiteMode.Strict,
             Path = "/"
         });
-        return Ok(new { message = "Logged out" });
+        return Ok("Logged out.");
     }
 
     private static string GenerateOtp(int digits)
@@ -308,7 +331,8 @@ public sealed class AuthController : ControllerBase
 
     private string GenerateJwt(User user)
     {
-        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "ReplaceWithStrongKey");
+        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+
         var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
 
         // 3. Get roles
@@ -333,7 +357,7 @@ public sealed class AuthController : ControllerBase
         if (user == null)
         {
             // Return same message to prevent enumeration
-            return Ok(new { message = "If account exists, a reset link has been sent." });
+            return Ok("If account exists, a reset link has been sent.");
         }
 
         var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
@@ -357,7 +381,7 @@ public sealed class AuthController : ControllerBase
 
         await _email.SendEmailAsync(user.Email, "Password reset request", body);
 
-        return Ok(new { message = "If account exists, a reset link has been sent." });
+        return Ok("If account exists, a reset link has been sent.");
     }
 
 
@@ -370,7 +394,7 @@ public sealed class AuthController : ControllerBase
         var user = await resetService.ValidateTokenAsync(token);
         if (user == null)
         {
-            return BadRequest(new { message = "Invalid or expired reset token." });
+            return BadRequest("Invalid or expired reset token.");
         }
 
         var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
@@ -378,12 +402,12 @@ public sealed class AuthController : ControllerBase
         var (valid, message) = policy.ValidatePassword(newPassword);
 
         if (!valid)
-            return BadRequest(new { message });
+            return BadRequest(message);
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
 
         if (await historyService.IsPasswordReusedAsync(user, newPassword))
-            return BadRequest(new { message = "You cannot reuse any of your last passwords." });
+            return BadRequest("You cannot reuse any of your last passwords.");
 
         var hasher = new PasswordHasher<User>();
 
@@ -397,6 +421,6 @@ public sealed class AuthController : ControllerBase
 
         await _email.SendEmailAsync(user.Email, "Password Reset Successful", "Your password has been reset successfully.");
 
-        return Ok(new { message = "Password reset successful." });
+        return Ok("Password reset successful.");
     }
 }

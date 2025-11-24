@@ -8,7 +8,7 @@ namespace WebAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class AlertsController : ControllerBase
+public class AlertsController : BaseController
 {
     private readonly AppDbContext _db;
     public AlertsController(AppDbContext db) { _db = db; }
@@ -20,7 +20,8 @@ public class AlertsController : ControllerBase
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                           ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
 
-        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized("User details not valid.");
 
         var alerts = await _db.DashboardAlerts
             .Where(a => a.UserId == userId)
@@ -36,18 +37,23 @@ public class AlertsController : ControllerBase
     public async Task<IActionResult> MarkRead(int id)
     {
         var alert = await _db.DashboardAlerts.FindAsync(id);
-        if (alert == null) return NotFound();
+        if (alert == null) 
+            return NotFound("No alerts found.");
+
         // ensure user owns it or is admin
         var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                           ?? User.FindFirst(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub)?.Value;
-        if (!int.TryParse(userIdClaim, out var userId)) return Unauthorized();
+        
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized("User details not valid.");
 
         var isAdmin = User.IsInRole("Admin");
-        if (alert.UserId != userId && !isAdmin) return Forbid();
+        if (alert.UserId != userId && !isAdmin) 
+            return Forbid("Not permited.");
 
         alert.IsRead = true;
         await _db.SaveChangesAsync();
-        return Ok(new { message = "Marked read" });
+        return Ok("Marked read.");
     }
 
     // Admin: get all pending alerts (optional)

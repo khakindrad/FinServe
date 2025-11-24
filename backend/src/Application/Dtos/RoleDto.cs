@@ -2,8 +2,8 @@
 
 public sealed class RoleDto
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public required int Id { get; set; }
+    public required string Name { get; set; }
 
-    public List<MenuDto>? Menus { get; set; }
+    public required List<string>? Menus { get; set; }
 }
