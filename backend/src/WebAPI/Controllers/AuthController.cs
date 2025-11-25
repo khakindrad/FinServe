@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
@@ -22,16 +22,88 @@ public sealed class AuthController : BaseController
     private readonly AppDbContext _db;
     private readonly IUserRepository _users;
     private readonly RefreshTokenService _rtService;
-    private readonly EmailService _email;
+    private readonly IEmailSender _email;
+    private readonly IMobileVerificationService _mobileVerificationService;
     private readonly MfaService _mfa;
     private readonly IConfiguration _config;
-    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IUserRepository users, RefreshTokenService rtService, EmailService email, MfaService mfa, IConfiguration config, ILogger<AuthController> logger, AppDbContext db)
+    public AuthController(IUserRepository users, IMobileVerificationService mobileVerificationService, RefreshTokenService rtService, IEmailSender email, MfaService mfa, IConfiguration config, ILogger logger, AppDbContext db)
+        : base(logger.ForContext<AuthController>())
     {
-        _users = users; _rtService = rtService; _email = email; _mfa = mfa; _config = config; _logger = logger;
+        _users = users; _rtService = rtService; _email = email; _mfa = mfa; _config = config;
         _db = db;
+        _mobileVerificationService = mobileVerificationService;
     }
+
+
+    #region Private Methods
+    private async Task<IActionResult> SendVerificationEmail(User user)
+    {
+        if (user.EmailVerified)
+            return BadRequest("Email already verified.");
+
+        var token = GenerateToken();
+
+        var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
+
+        var record = new EmailVerificationToken
+        {
+            Email = user.Email,
+            Token = token,
+            ExpiryTime = DateTime.UtcNow.AddHours(expiryHours),
+            IsUsed = false
+        };
+
+        _db.EmailVerificationTokens.Add(record);
+        await _db.SaveChangesAsync();
+
+        string verificationUrl = $"{Request.Scheme}://{Request.Host}/api/auth/verify-email?email={user.Email}&token={token}";
+
+        string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p>Please click the button below to verify your account:</p>
+        <p><a href='{verificationUrl}' 
+              style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Verify Email
+           </a>
+        </p>
+        <p>This link will expire in {expiryHours} hour.</p>;
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
+
+        return Ok();
+    }
+    private static string GenerateToken()
+    {
+        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
+                      .Replace("/", "-")
+                      .Replace("+", "_");
+    }
+
+    private string GenerateJwt(User user)
+    {
+        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
+
+        var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
+
+        // 3. Get roles
+        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
+
+        var claims = new List<Claim>
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.FullName), 
+            //new Claim(ClaimTypes.Role, user.UserRoles?.Name ?? "Customer") 
+        };
+        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
+        var token = new JwtSecurityToken(issuer: _config["Jwt:Issuer"], audience: _config["Jwt:Audience"], claims: claims, expires: DateTime.UtcNow.AddMinutes(_config.GetValue("Jwt:ExpiryMinutes", 15)), signingCredentials: creds);
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    #endregion
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto)
@@ -80,41 +152,34 @@ public sealed class AuthController : BaseController
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
         await historyService.AddToHistoryAsync(user);
 
-        var token = GenerateToken();
+        var emailSendResult = await SendVerificationEmail(user);
 
-        var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
-
-        var record = new EmailVerificationToken
+        if (emailSendResult is OkResult)
         {
-            Email = dto.Email,
-            Token = token,
-            ExpiryTime = DateTime.UtcNow.AddHours(expiryHours),
-            IsUsed = false
-        };
+            Logger.Information("Verification email sent to {Email}", dto.Email);
+        }
+        else
+        {
+            Logger.Warning("Failed to send verification email to {Email}", dto.Email);
 
-        _db.EmailVerificationTokens.Add(record);
-        await _db.SaveChangesAsync();
-
-        string verificationUrl = $"{Request.Scheme}://{Request.Host}/api/auth/verify-email?email={dto.Email}&token={token}";
-
-        string body = $@"
-        <p>Hello <strong>{user.FullName}</strong>,</p>
-        <p>Welcome to FinServe!</p>
-        <p>Please click the button below to verify your account:</p>
-        <p><a href='{verificationUrl}' 
-              style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
-              Verify Email
-           </a>
-        </p>
-        <p>This link will expire in {expiryHours} hour.</p>;
-        <p>If you didn’t create this account, you can safely ignore this email.</p>
-        ";
-
-        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
+            return emailSendResult;
+        }
 
         var adminEmail = _config["Admin:NotificationEmail"];
         if (!string.IsNullOrEmpty(adminEmail))
-            await _email.SendEmailAsync(adminEmail, "New user pending approval", $"User {user.Email} registered. Id:{user.Id}");
+        {
+            string emailBody = $@"
+        <p>Hello <strong>Admin User</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              User {user.FullName} email {user.Email} registered. Id:{user.Id}
+           </a>
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+            await _email.SendEmailAsync(adminEmail, "New user pending approval", emailBody);
+        }            
 
         var registerResponseDto = new RegisterResponseDto
         {
@@ -163,19 +228,92 @@ public sealed class AuthController : BaseController
         return Ok("Email verified successfully!");
     }
 
-    [HttpPost("verify-mobile")] 
-    public async Task<IActionResult> VerifyMobile([FromBody] VerifyMobileDto verifyMobileDto) 
-    { 
-        int userId = verifyMobileDto.UserId; 
-        var user = await _users.GetByIdAsync(userId); 
-        if (user == null) 
-            return NotFound("User not found."); 
+    [HttpPost("send-verification-email")]
+    public async Task<IActionResult> SendVerificationMail([FromBody] SendVerificationMailDto sendVerificationMailDto)
+    {
+        var user = await _users.GetByIdAsync(sendVerificationMailDto.UserId);
+        if (user == null)
+            return NotFound("User not found.");
 
-        user.MobileVerified = true; 
-        await _users.UpdateAsync(user); 
-        await _users.SaveChangesAsync(); 
+        var emailSendResult = await SendVerificationEmail(user);
 
-        return Ok("Mobile verified."); 
+        if (emailSendResult is OkResult)
+        {
+            Logger.Information("Verification email sent to {Email}", user.Email);
+            return Ok($"Verification email sent to {user.Email}");
+        }
+        else
+        {
+            Logger.Warning("Failed to send verification email to {Email}", user.Email);
+
+            return emailSendResult;
+        }
+    }
+
+    [HttpPost("update-email")]
+    public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto updateEmailDto)
+    {
+        int userId = updateEmailDto.UserId;
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            return NotFound("User not found.");
+
+        user.Email = updateEmailDto.NewEmail;
+
+        user.EmailVerified = false;
+
+        await _users.UpdateAsync(user);
+
+        await _users.SaveChangesAsync();
+
+        var emailSendResult = await SendVerificationEmail(user);
+
+        if (emailSendResult is OkResult)
+        {
+            Logger.Information("Verification email sent to {Email}", user.Email);
+            return Ok($"Verification email sent to {user.Email}");
+        }
+        else
+        {
+            Logger.Warning("Failed to send verification email to {Email}", user.Email);
+
+            return emailSendResult;
+        }
+    }
+
+    [HttpPost("update-mobile")]
+    public async Task<IActionResult> UpdateMobile([FromBody] UpdateMobileDto updateMobileDto)
+    {
+        int userId = updateMobileDto.UserId;
+        var user = await _users.GetByIdAsync(userId);
+        if (user == null)
+            return NotFound("User not found.");
+
+        user.Mobile = updateMobileDto.NewMobile;
+
+        user.MobileVerified = false;
+
+        await _users.UpdateAsync(user);
+
+        await _users.SaveChangesAsync();
+
+        return Ok("Mobile Number updated successfully.");
+    }
+
+    [HttpPost("send-otp")]
+    public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
+    {
+        var response = await _mobileVerificationService.SendOtpAsync(dto.UserId);
+
+        return StatusCode(response.StatusCode, response);
+    }
+
+    [HttpPost("verify-otp")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    {
+        var response = await _mobileVerificationService.VerifyOtpAsync(dto.UserId, dto.Otp);
+
+        return StatusCode(response.StatusCode, response);
     }
 
     [HttpPost("login")]
@@ -185,14 +323,28 @@ public sealed class AuthController : BaseController
         if (user == null)
             return NotFound("User not found.");
 
-        if (!user.IsApproved)
-            return Forbid("User not approved.");
+        var responseDto = new LoginResponseUserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FullName = user.FullName,
+            EmailVerified = user.EmailVerified,
+            MobileVerified = user.MobileVerified,
+            ProfileImageUrl = user.ProfileImageUrl,
+            Roles = user.UserRoles.Select(r => r.Role.Name)?.ToList(),
+        };
 
-        if (!user.EmailVerified || !user.MobileVerified)
-            return Forbid("Email and mobile must be verified.");
+        if (!user.EmailVerified)
+            return Forbid("Email must be verified.", responseDto);
+
+        if (!user.MobileVerified)
+            return Forbid("Mobile must be verified.", responseDto);
+
+        if (!user.IsApproved)
+            return Forbid("User not approved.", responseDto);
 
         if (user.LockoutEndAt.HasValue && user.LockoutEndAt.Value > DateTime.UtcNow)
-            return Forbid("Account locked.");
+            return Forbid($"Account locked, your account will be unlocked at {user.LockoutEndAt}.");
 
         var hasher = new PasswordHasher<User>();
 
@@ -240,14 +392,7 @@ public sealed class AuthController : BaseController
             new LoginResponseDto
             {
                 AccessToken = accessToken,
-                User = new LoginResponseUserDto
-                {
-                    Id = user.Id,
-                    Email = user.Email,
-                    FullName = user.FullName,
-                    ProfileImageUrl = user.ProfileImageUrl,
-                    Roles = user.UserRoles.Select(r => r.Role.Name)?.ToList(),                    
-                }
+                User = responseDto,
             });
     }
 
@@ -315,45 +460,12 @@ public sealed class AuthController : BaseController
         });
         return Ok("Logged out.");
     }
-
-    private static string GenerateOtp(int digits)
-    {
-        var rng = RandomNumberGenerator.GetInt32(0, (int)Math.Pow(10, digits));
-        return rng.ToString($"D{digits}");
-    }
-
-    private static string GenerateToken()
-    {
-        return Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-                      .Replace("/", "-")
-                      .Replace("+", "_");
-    }
-
-    private string GenerateJwt(User user)
-    {
-        var key = Encoding.UTF8.GetBytes(_config["Jwt:Key"]);
-
-        var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
-
-        // 3. Get roles
-        var roles = user.UserRoles.Select(ur => ur.Role.Name).ToList();
-
-        var claims = new List<Claim>
-        { 
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.FullName), 
-            //new Claim(ClaimTypes.Role, user.UserRoles?.Name ?? "Customer") 
-        };
-        claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
-        var token = new JwtSecurityToken(issuer: _config["Jwt:Issuer"], audience: _config["Jwt:Audience"], claims: claims, expires: DateTime.UtcNow.AddMinutes(_config.GetValue("Jwt:ExpiryMinutes", 15)), signingCredentials: creds);
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
+    
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] string email, [FromServices] PasswordResetService resetService)
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto, [FromServices] PasswordResetService resetService)
     {
-        var user = await _users.GetByEmailAsync(email);
+        var user = await _users.GetByEmailAsync(forgotPasswordDto.Email);
         if (user == null)
         {
             // Return same message to prevent enumeration
@@ -364,12 +476,11 @@ public sealed class AuthController : BaseController
 
         var tokenEntity = await resetService.CreateTokenAsync(user.Id, (int)TimeSpan.FromHours(expiryHours).TotalMinutes);
 
-        var resetUrl = $"{Request.Scheme}://{Request.Host}/reset/{Uri.EscapeDataString(tokenEntity.Token)}";
+        var resetUrl = $"{forgotPasswordDto.RedirectUrl}/{Uri.EscapeDataString(tokenEntity.Token)}";
 
         string body = $@"
         <p>Hello <strong>{user.FullName}</strong>,</p>
         <p>Welcome to FinServe!</p>
-        <p>Click below to reset your password:</p>
         <p><a href='{resetUrl}' 
               style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
               Reset Password
@@ -384,14 +495,10 @@ public sealed class AuthController : BaseController
         return Ok("If account exists, a reset link has been sent.");
     }
 
-
     [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] dynamic body, [FromServices] PasswordResetService resetService)
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto, [FromServices] PasswordResetService resetService)
     {
-        string token = (string)body.token;
-        string newPassword = (string)body.newPassword;
-
-        var user = await resetService.ValidateTokenAsync(token);
+        var user = await resetService.ValidateTokenAsync(resetPasswordDto.Token);
         if (user == null)
         {
             return BadRequest("Invalid or expired reset token.");
@@ -399,19 +506,19 @@ public sealed class AuthController : BaseController
 
         var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
 
-        var (valid, message) = policy.ValidatePassword(newPassword);
+        var (valid, message) = policy.ValidatePassword(resetPasswordDto.NewPassword);
 
         if (!valid)
             return BadRequest(message);
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
 
-        if (await historyService.IsPasswordReusedAsync(user, newPassword))
+        if (await historyService.IsPasswordReusedAsync(user, resetPasswordDto.NewPassword))
             return BadRequest("You cannot reuse any of your last passwords.");
 
         var hasher = new PasswordHasher<User>();
 
-        user.PasswordHash = hasher.HashPassword(user, newPassword);
+        user.PasswordHash = hasher.HashPassword(user, resetPasswordDto.NewPassword);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
@@ -419,8 +526,69 @@ public sealed class AuthController : BaseController
         await _users.SaveChangesAsync();
         await historyService.AddToHistoryAsync(user);
 
-        await _email.SendEmailAsync(user.Email, "Password Reset Successful", "Your password has been reset successfully.");
+        string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Your password has been reset successfully.
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Password Reset Successful", body);
 
         return Ok("Password reset successful.");
+    }
+
+    [HttpPost("change-password")]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
+    {
+        var user = await _users.GetByIdAsync(changePasswordDto.Id);
+        if (user == null)
+            return NotFound("User not found.");
+
+        var hasher = new PasswordHasher<User>();
+
+        // Verify old password
+        var oldHash = Convert.FromBase64String(user.PasswordHash);
+
+        if (hasher.VerifyHashedPassword(user, user.PasswordHash, changePasswordDto.OldPassword) == PasswordVerificationResult.Failed)
+        {
+            return BadRequest("Old password is incorrect.");
+        }
+
+        var policy = HttpContext.RequestServices.GetRequiredService<PasswordPolicyService>();
+
+        var (valid, message) = policy.ValidatePassword(changePasswordDto.NewPassword);
+
+        if (!valid)
+            return BadRequest(message);
+
+        var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
+
+        if (await historyService.IsPasswordReusedAsync(user, changePasswordDto.NewPassword))
+            return BadRequest("You cannot reuse any of your last passwords.");
+
+        user.PasswordHash = hasher.HashPassword(user, changePasswordDto.NewPassword);
+        user.PasswordLastChanged = DateTime.UtcNow;
+        user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
+
+        await _users.UpdateAsync(user);
+        await _users.SaveChangesAsync();
+        await historyService.AddToHistoryAsync(user);
+
+        string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Your password has been Changed successfully.
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Password Changed Successful", body);
+
+        return Ok("Password Changed successful.");
     }
 }

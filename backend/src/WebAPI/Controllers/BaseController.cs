@@ -1,11 +1,20 @@
 using Application.Dtos;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
 public abstract class BaseController : ControllerBase
 {
+    private readonly ILogger _logger;
+
+    protected ILogger Logger => _logger;
+    protected BaseController(ILogger logger)
+    {
+        _logger = logger;
+    }
+
     protected IActionResult Success<T>(T? data = null) where T : class
     {
         var response = new ApiResponse<T>(HttpStatusCode.OK, null, data);
@@ -63,6 +72,12 @@ public abstract class BaseController : ControllerBase
     protected IActionResult Forbid(string message)
     {
         var response = new ApiResponse<string>(HttpStatusCode.Forbidden, message);
+        return StatusCode((int)HttpStatusCode.Forbidden, response);
+    }
+
+    protected IActionResult Forbid<T>(string message, T data) where T : class
+    {
+        var response = new ApiResponse<T>(HttpStatusCode.Forbidden, message, data);
         return StatusCode((int)HttpStatusCode.Forbidden, response);
     }
 

@@ -1,12 +1,14 @@
 ﻿using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebAPI.Controllers;
+using ILogger = Serilog.ILogger;
+
+namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/dev")]
 [Authorize(Roles = "Admin")]
-public class DevController : BaseController
+public sealed class DevController(ILogger logger) : BaseController(logger.ForContext<DevController>())
 {
     [HttpPost("run-password-expiry")]
     public async Task<IActionResult> Run([FromServices] PasswordExpiryNotificationService svc)

@@ -1,6 +1,6 @@
 ﻿namespace Application.Dtos;
 
-public class SendOtpDto
+public class SendVerificationMailDto
 {
     public required int UserId { get; set; }
 }

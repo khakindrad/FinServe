@@ -5,6 +5,8 @@ using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ILogger = Serilog.ILogger;
+
 namespace WebAPI.Controllers;
 
 [ApiController]
@@ -14,16 +16,15 @@ public sealed class AdminController : BaseController
 {
     private readonly IUserRepository _users;
     private readonly AppDbContext _db;
-    private readonly EmailService _email;
-    private readonly Serilog.ILogger _logger;
+    private readonly IEmailSender _email;
     private readonly IUserRoleService _userRoleService;
-    public AdminController(IUserRepository users, AppDbContext db, EmailService email, Serilog.ILogger logger
+    public AdminController(IUserRepository users, AppDbContext db, IEmailSender email, ILogger logger
         , IUserRoleService userRoleService)
+        : base(logger.ForContext<AdminController>())
     {
         _users = users;
         _db = db;
         _email = email;
-        _logger = logger.ForContext<AdminController>();
         _userRoleService = userRoleService;
     }
 
@@ -192,18 +193,27 @@ public sealed class AdminController : BaseController
         catch (Exception hx)
         {
             // non-fatal - log and continue
-            _logger.Warning(hx, "Failed to write login history for unlock operation on user {UserId}", userId);
+            Logger.Warning(hx, "Failed to write login history for unlock operation on user {UserId}", userId);
         }
 
         // Send email notification (best-effort)
         try
         {
-            await _email.SendEmailAsync(user.Email, "Your account has been unlocked",
-                $"Hello {user.FullName},<br/><br/>Your account was unlocked by an administrator. You can attempt login now.");
+            string emailBody = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Your account was unlocked by an administrator. You can attempt login now.
+           </a>
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+            await _email.SendEmailAsync(user.Email, "Your account has been unlocked", emailBody);
         }
         catch (Exception ex)
         {
-            _logger.Warning(ex, "Failed to send unlock email to {Email}", user.Email);
+            Logger.Warning(ex, "Failed to send unlock email to {Email}", user.Email);
         }
 
         // Create dashboard alert (best-effort) if DashboardAlerts DbSet exists
@@ -222,10 +232,10 @@ public sealed class AdminController : BaseController
         }
         catch (Exception ex)
         {
-            _logger.Debug(ex, "Dashboard alert create failed for user {UserId}", userId);
+            Logger.Debug(ex, "Dashboard alert create failed for user {UserId}", userId);
         }
 
-        _logger.Information("Admin {AdminEmail} unlocked user {UserEmail} (id:{UserId})", User.Identity?.Name ?? "unknown", user.Email, user.Id);
+        Logger.Information("Admin {AdminEmail} unlocked user {UserEmail} (id:{UserId})", User.Identity?.Name ?? "unknown", user.Email, user.Id);
 
         return Ok("User unlocked successfully.");
     }
@@ -250,7 +260,18 @@ public sealed class AdminController : BaseController
         user.IsApproved = true;
         await _users.UpdateAsync(user);
         await _users.SaveChangesAsync();
-        await _email.SendEmailAsync(user.Email, "Account approved", "Your account is approved by admin.");
+
+        string emailBody = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>Welcome to FinServe!</p>
+        <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Your account is approved by admin.
+           </a>
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+        await _email.SendEmailAsync(user.Email, "Account approved", emailBody);
 
         return Ok("Approved.");
     }

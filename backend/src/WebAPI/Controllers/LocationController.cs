@@ -2,16 +2,18 @@
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/location")]
-public class LocationController : BaseController
+public sealed class LocationController : BaseController
 {
     private readonly AppDbContext _db;
 
-    public LocationController(AppDbContext db)
+    public LocationController(ILogger logger, AppDbContext db)
+        : base(logger.ForContext<LocationController>())
     {
         _db = db;
     }

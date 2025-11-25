@@ -2,16 +2,21 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class AlertsController : BaseController
+public sealed class AlertsController: BaseController
 {
     private readonly AppDbContext _db;
-    public AlertsController(AppDbContext db) { _db = db; }
+    public AlertsController(ILogger logger, AppDbContext db) :
+        base(logger.ForContext<AlertsController>())
+    {
+        _db = db;
+    }
 
     // GET api/alerts/my
     [HttpGet("my")]

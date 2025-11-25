@@ -1,13 +1,19 @@
 ﻿using Application.Dtos;
 using Core.Entities;
 using Microsoft.AspNetCore.Mvc;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MasterController : BaseController
+public sealed class MasterController : BaseController
 {
+    public MasterController(ILogger logger)
+        : base(logger.ForContext<MasterController>())
+    {
+    }
+
     [HttpGet("genders")]
     public async Task<IActionResult> GetGenders()
     {

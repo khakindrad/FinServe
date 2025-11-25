@@ -2,6 +2,7 @@
 using Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
 
@@ -11,12 +12,11 @@ namespace WebAPI.Controllers;
 public sealed class UserController : BaseController
 {
     private readonly IUserRepository _users;
-    private readonly ILogger<UserController> _logger;
 
-    public UserController(IUserRepository users, ILogger<UserController> logger)
+    public UserController(ILogger logger, IUserRepository users)
+        : base(logger.ForContext<UserController>())
     {
         _users = users;
-        _logger = logger;
     }
 
     // =======================
@@ -52,7 +52,7 @@ public sealed class UserController : BaseController
             UpdatedAt = user.UpdatedAt
         };
 
-        _logger.LogInformation("Profile viewed by user {UserId}", userId);
+        Logger.Information("Profile viewed by user {UserId}", userId);
         return Ok(profile);
     }
 
@@ -86,7 +86,7 @@ public sealed class UserController : BaseController
         await _users.UpdateAsync(user);
         await _users.SaveChangesAsync();
 
-        _logger.LogInformation("User {UserId} updated profile successfully", userId);
+        Logger.Information("User {UserId} updated profile successfully", userId);
 
         return Ok("Profile updated successfully.");
     }

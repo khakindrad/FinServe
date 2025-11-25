@@ -5,7 +5,6 @@ using Infrastructure.Data;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -67,7 +66,7 @@ internal sealed class Program
             builder.Services.AddSingleton<IHostLifetime, CustomConsoleLiftime>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<RefreshTokenService>();
-            builder.Services.AddScoped<EmailService>();
+            builder.Services.AddScoped<IEmailSender, EmailSender>();
             builder.Services.AddScoped<MfaService>();
             builder.Services.AddScoped<PasswordResetService>();
             builder.Services.AddScoped<PasswordPolicyService>();
@@ -78,6 +77,8 @@ internal sealed class Program
 
             builder.Services.AddScoped<IUserRoleService, UserRoleService>();
             builder.Services.AddScoped<IMenuService, MenuService>();
+            builder.Services.AddScoped<ISmsSender, TestSmsSender>();
+            builder.Services.AddScoped<IMobileVerificationService, MobileVerificationService>();
 
             // Read CORS config from appsettings.json
             var corsSettings = builder.Configuration.GetSection("Cors");

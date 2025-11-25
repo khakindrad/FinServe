@@ -23,6 +23,7 @@ public class AppDbContext : DbContext
     public DbSet<RoleMenu> RoleMenus { get; set; } = null!;
     public DbSet<UserRole> UserRoles { get; set; } = null!;
     public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
+    public DbSet<MobileVerificationToken> MobileVerificationTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

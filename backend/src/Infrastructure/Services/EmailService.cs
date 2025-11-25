@@ -4,10 +4,13 @@ using System.Net.Mail;
 
 namespace Infrastructure.Services;
 
-public class EmailService
+public sealed class EmailSender : IEmailSender
 {
     private readonly IConfiguration _config;
-    public EmailService(IConfiguration config) { _config = config; }
+    public EmailSender(IConfiguration config) 
+    { 
+        _config = config; 
+    }
 
     public async Task SendEmailAsync(string to, string subject, string html)
     {

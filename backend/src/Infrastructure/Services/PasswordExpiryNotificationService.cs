@@ -4,17 +4,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using System.Threading.Channels;
 
 namespace Infrastructure.Services;
 
 public class PasswordExpiryNotificationService
 {
     private readonly AppDbContext _db;
-    private readonly EmailService _email;
+    private readonly IEmailSender _email;
     private readonly IConfiguration _config;
     private readonly ILogger<PasswordExpiryNotificationService> _logger;
 
-    public PasswordExpiryNotificationService(AppDbContext db, EmailService email, IConfiguration config, ILogger<PasswordExpiryNotificationService> logger)
+    public PasswordExpiryNotificationService(AppDbContext db, IEmailSender email, IConfiguration config, ILogger<PasswordExpiryNotificationService> logger)
     {
         _db = db;
         _email = email;
@@ -76,7 +77,19 @@ public class PasswordExpiryNotificationService
             // Send email (best-effort, do not fail the whole loop)
             try
             {
-                await _email.SendEmailAsync(user.Email, title, $"<p>{message}</p><p><a href='{_config["Frontend:BaseUrl"] ?? "http://localhost:3000"}/'>Login to change</a></p>");
+                string body = $@"
+        <p>Hello <strong>{user.FullName}</strong>,</p>
+        <p>your account password will expire on {expiryStr} (in {daysLeft} day(s)). Please change your password to avoid being locked out.</p>
+        <p>Please click the button below to verify your account:</p>
+        <p><a href='{_config["Frontend:BaseUrl"]}' 
+              style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
+              Login to change
+           </a>
+        </p>
+        <p>If you didn’t create this account, you can safely ignore this email.</p>
+        ";
+
+                await _email.SendEmailAsync(user.Email, title, body);
             }
             catch (Exception ex)
             {
