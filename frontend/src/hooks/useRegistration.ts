@@ -9,7 +9,6 @@ import { useRouter } from "next/navigation";
 export function useRegistration(setErrorMsg: any, setSuccessMsg: any) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-
   // ***** FORM SUBMIT FUNCTION *****
   async function registerUser(form: any) {
     setLoading(true);
@@ -19,28 +18,36 @@ export function useRegistration(setErrorMsg: any, setSuccessMsg: any) {
       const payload = {
         email: form.email.trim(),
         mobile: form.mobile.trim(),
-        gender: form.gender === "M" ? "Male" : form.gender === "F" ? "Female" : "Other", // matches enum Gender
-        dateOfBirth: form.dateOfBirth, // DateOnly string, e.g., "2025-11-23"
+        gender: form.gender ,
+        dateOfBirth: form.dateOfBirth, 
         firstName: form.firstName.trim(),
-        middleName: form.middleName ? form.middleName.trim() : null, // optional
+        middleName: form.middleName ? form.middleName.trim() : null, 
         lastName: form.lastName.trim(),
-        countryId: Number(form.countryId), // must be numeric ID
-        stateId: Number(form.stateId),     // must be numeric ID
-        cityId: Number(form.cityId),       // must be numeric ID
+        countryId: Number(form.countryId), 
+        stateId: Number(form.stateId),    
+        cityId: Number(form.cityId),       
         address: form.address.trim(),
         pinCode: form.pinCode.trim(),
         password: form.password,
       };
-      await api.register(payload); // <-- IMPORTANT: Correct API call
-      setSuccessMsg("Account created successfully!");
-      // Redirect after short delay
-      setTimeout(() => {
-        router.push("/login");
-      }, 1200);
-    } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong, please try later.");
+      
+      let res=await api.register(payload);
+      if(res.statusCode==="OK")
+      {
+        if(res?.message)
+        {
+          setSuccessMsg(res.message);
+        }
+        return  true;
+      }
+    } 
+    catch (err: any) {
+      setErrorMsg(err?.message || "Something went wrong, Please Try again later.");
+      return false;
     }
-    setLoading(false);
+    finally {
+      setLoading(false);
+    }
   }
   return { registerUser, loading };
 }
