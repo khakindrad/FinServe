@@ -14,23 +14,22 @@ export function useAdminMenu() {
         const dummyMenu = [
           {
             id: 1,
-            name: "Dashboard",
+            name: "App Management",
             icon: "Home",
             order: 1,
             children: [
-              { id: 11, name: "Overview", path: "/dashboard", order: 1 },
-              { id: 12, name: "Reports", path: "/dashboard/reports", order: 2 },
+              { id: 11, name: "Add Module", path: "/App_Management/Add_Module", order: 1 },
+              { id: 12, name: "Add Activiy", path: "/App_Management/Add_Activity", order: 2 },
             ],
           },
           {
             id: 2,
-            name: "Users",
-            icon: "Users",
+            name: "User Management",
             order: 2,
             children: [
-              { id: 21, name: "All Users", path: "/users", order: 1 },
-              { id: 22, name: "Roles", path: "/users/roles", order: 2 },
-              { id: 23, name: "Permissions", path: "/users/permissions", order: 3 },
+              { id: 21, name: "Approve Users", path: "#", order: 1 },
+              { id: 22, name: "All Users", path: "#", order: 2 },
+              { id: 23, name: "All Roles", path: "#", order: 3 },
             ],
           },
           {
@@ -39,8 +38,8 @@ export function useAdminMenu() {
             icon: "Settings",
             order: 3,
             children: [
-              { id: 31, name: "General", path: "/settings/general", order: 1 },
-              { id: 32, name: "Security", path: "/settings/security", order: 2 },
+              { id: 31, name: "General", path: "#", order: 1 },
+              { id: 32, name: "Security", path: "#", order: 2 },
             ],
           },
         ];
