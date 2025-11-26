@@ -18,8 +18,8 @@ export function useAdminMenu() {
             icon: "Home",
             order: 1,
             children: [
-              { id: 11, name: "Add Module", path: "/App_Management/Add_Module", order: 1 },
-              { id: 12, name: "Add Activiy", path: "/App_Management/Add_Activity", order: 2 },
+              { id: 11, name: "Add Module", path: "/admin/dashboard/app-management/add-module", order: 1 },
+              { id: 12, name: "Add Activiy", path: "/admin/dashboard/app-management/add-activity", order: 2 },
             ],
           },
           {
@@ -27,7 +27,7 @@ export function useAdminMenu() {
             name: "User Management",
             order: 2,
             children: [
-              { id: 21, name: "Approve Users", path: "#", order: 1 },
+              { id: 21, name: "Approve Users", path: "/admin/dashboard/user-management/approve-user", order: 1 },
               { id: 22, name: "All Users", path: "#", order: 2 },
               { id: 23, name: "All Roles", path: "#", order: 3 },
             ],

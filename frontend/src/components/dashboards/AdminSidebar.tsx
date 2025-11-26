@@ -5,22 +5,22 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-import { 
-  Users, 
-  UserCog, 
-  Truck, 
-  BarChart3, 
-  LogOut 
+import {
+  Users,
+  UserCog,
+  Truck,
+  BarChart3,
+  LogOut
 } from "lucide-react";
 
 import { useAdminMenu } from "@/hooks/useAdminMenu";
 
 // map icons by name so dummy data works
-const ICONS: Record<string, any> = { 
-  Users, 
-  UserCog, 
-  Truck, 
-  BarChart3 
+const ICONS: Record<string, any> = {
+  Users,
+  UserCog,
+  Truck,
+  BarChart3
 };
 
 export default function AdminSidebar() {
@@ -62,20 +62,20 @@ export default function AdminSidebar() {
                 </p>
 
                 <div className="space-y-1 ml-4">
-                {group.children.map((item: any, i: number) => {
-  const href = item.href || "/"; // fallback to home
+                  {group.children.map((item: any, i: number) => {
+                    const href = item.path || "/"; // fallback to home
 
-  return (
-    <Link key={i} href={href}>
-      <Button
-        variant="ghost"
-        className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
-      >
-        {item.name || "Unnamed"}
-      </Button>
-    </Link>
-  );
-})}
+                    return (
+                      <Link key={i} href={href}>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        >
+                          {item.name || "Unnamed"}
+                        </Button>
+                      </Link>
+                    );
+                  })}
 
                 </div>
               </div>
@@ -86,8 +86,8 @@ export default function AdminSidebar() {
 
       {/* LOGOUT BUTTON */}
       <div>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start text-red-600 hover:bg-red-50"
           onClick={logout}
         >
