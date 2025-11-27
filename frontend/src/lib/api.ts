@@ -2,9 +2,8 @@
 import { getAccessToken, setAccessToken, clearAccessToken } from "./auth";
 import { refreshAccessToken } from "./refreshClient";
 import { normalizeHeaders } from "./utils";
-
 //Base URL
-export const API_BASE_URL ="https://tzrhqvey9d.execute-api.us-east-1.amazonaws.com/prod/api"; //"https://localhost:5005/api" 
+export const API_BASE_URL = "https://tzrhqvey9d.execute-api.us-east-1.amazonaws.com/prod/api";//"http://54.81.12.127:5005/api";//"https://localhost:5005/api"; //"https://tzrhqvey9d.execute-api.us-east-1.amazonaws.com/prod/api"; //
 
 
 // -----------------------------
@@ -36,19 +35,23 @@ async function rawRequest(path: string, options: RequestInit = {}) {
 async function request(path: string, options: RequestInit = {}) {
   let errMsg = "";
   let res = await rawRequest(path, options);
-  let result=await res.json();
+  let result = await res.json();
 
-  if (result.statusCode !==200) {
-    
-      if(result.statusCode===403 && 
-        ( result.data.emailVerified 
-          || result.data.mobileVerified 
-        ))return result;
+  if (result.statusCode !== 200) {
+
+    if (path === "/Auth/login") {
+      if (result.statusCode === 403 &&
+        (result.data.emailVerified
+          || result.data.mobileVerified
+        )) return result;
+    }
     errMsg = result.message ?? "Something went wrong.";
     throw new Error(errMsg);
-    }
+  }
   return result;
 }
+
+
 // -----------------------------
 // EXPORT API METHODS
 // -----------------------------
@@ -79,7 +82,7 @@ export const api = {
       method: "POST",
     }),
 
-  forgotPassword: () =>
+  forgotPassword: (email) =>
     request("/Auth/forgot-password", {
       method: "POST",
     }),
@@ -90,15 +93,15 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
-    emailVerification: (data: any) =>
-      request("/Auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
+  emailVerification: (data: any) =>
+    request("/Auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
-    mobileVerification: (data: any) =>
-      request("/Auth/register", {
-        method: "POST",
-        body: JSON.stringify(data),
+  mobileVerification: (data: any) =>
+    request("/Auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
   /*
          ------------------------------User-----------------------------------------
@@ -133,7 +136,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-
+  getPendingUsers: () =>
+    request("/admin/pending-users", {
+      method: "POST",
+    }),
   /*
        ------------------------------API for Registration-----------------------------------------
 */
