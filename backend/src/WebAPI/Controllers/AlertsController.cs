@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Infrastructure.Data;
 using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
@@ -30,9 +30,9 @@ public sealed class AlertsController: BaseController
 
         var alerts = await _db.DashboardAlerts
             .Where(a => a.UserId == userId)
-            .OrderByDescending(a => a.CreatedAt)
-            .Select(a => new { a.Id, a.Title, a.Message, a.IsRead, a.CreatedAt })
-            .ToListAsync();
+            .OrderByDescending(a => a.CreatedTime)
+            .Select(a => new { a.Id, a.Title, a.Message, a.IsRead, a.CreatedTime })
+            .ToListAsync().ConfigureAwait(false);
 
         return Ok(alerts);
     }
@@ -41,7 +41,7 @@ public sealed class AlertsController: BaseController
     [HttpPut("markread/{id}")]
     public async Task<IActionResult> MarkRead(int id)
     {
-        var alert = await _db.DashboardAlerts.FindAsync(id);
+        var alert = await _db.DashboardAlerts.FindAsync(id).ConfigureAwait(false);
         if (alert == null) 
             return NotFound("No alerts found.");
 
@@ -57,7 +57,7 @@ public sealed class AlertsController: BaseController
             return Forbid("Not permited.");
 
         alert.IsRead = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         return Ok("Marked read.");
     }
 
@@ -67,10 +67,10 @@ public sealed class AlertsController: BaseController
     public async Task<IActionResult> All()
     {
         var list = await _db.DashboardAlerts
-            .OrderByDescending(a => a.CreatedAt)
+            .OrderByDescending(a => a.CreatedTime)
             .Take(200)
-            .Select(a => new { a.Id, a.UserId, a.Title, a.Message, a.IsRead, a.CreatedAt })
-            .ToListAsync();
+            .Select(a => new { a.Id, a.UserId, a.Title, a.Message, a.IsRead, a.CreatedTime })
+            .ToListAsync().ConfigureAwait(false);
         return Ok(list);
     }
 }

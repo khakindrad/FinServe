@@ -1,4 +1,4 @@
-using Application.Dtos;
+using Application.Dtos.Menus;
 
 namespace Infrastructure.Services;
 

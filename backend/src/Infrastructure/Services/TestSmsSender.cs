@@ -25,7 +25,7 @@ public sealed class TestSmsSender : BaseService, ISmsSender
         <p>This otp will expire in {expiryMinutes} Minutes.</p>;
         ";
 
-        await _emailSender.SendEmailAsync(mobileNo, "Verify your Mobile Number - FinServe", body);
+        await _emailSender.SendEmailAsync(mobileNo, "Verify your Mobile Number - FinServe", body).ConfigureAwait(false);
 
         Logger.Debug("Test SMS sent to {MobileNo} with OTP {Otp}", mobileNo, otp);
     }

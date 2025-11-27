@@ -1,8 +1,8 @@
 namespace Core.Entities;
 
-public sealed class User
+
+public sealed class User : BaseEntity
 {
-    public int Id { get; set; }
     public required string Email { get; set; }
     public required string Mobile { get; set; }
     public required Gender Gender { get; set; }
@@ -34,6 +34,4 @@ public sealed class User
     public bool MfaEnabled { get; set; }
     public string? MfaSecret { get; set; }
     public string? DeviceTokensJson { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime? UpdatedAt { get; set; }
 }

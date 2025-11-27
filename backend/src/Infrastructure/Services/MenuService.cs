@@ -1,4 +1,4 @@
-using Application.Dtos;
+using Application.Dtos.Menus;
 using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -35,18 +35,18 @@ public class MenuService : IMenuService
         var menus = await (from r in _db.Roles
                            where roleNames.Contains(r.Name)
                            join rm in _db.RoleMenus on r.Id equals rm.RoleId
-                           join m in _db.MenuMaster on rm.MenuId equals m.MenuId
+                           join m in _db.MenuMaster on rm.MenuId equals m.Id
                            where m.IsActive
                            select m)
         .Distinct()
         .OrderBy(m => m.Sequence)
         .AsNoTracking()
-        .ToListAsync();
+        .ToListAsync().ConfigureAwait(false);
 
         // Build hierarchy
-        var dict = menus.ToDictionary(m => m.MenuId, m => new MenuDto
+        var dict = menus.ToDictionary(m => m.Id, m => new MenuDto(default, default, null, null, default, default)
         {
-            MenuId = m.MenuId,
+            MenuId = m.Id,
             Name = m.Name,
             Route = m.Route,
             Icon = m.Icon
@@ -60,11 +60,11 @@ public class MenuService : IMenuService
         {
             if (m.ParentId.HasValue && dict.ContainsKey(m.ParentId.Value))
             {
-                dict[m.ParentId.Value].Children.Add(dict[m.MenuId]);
+                dict[m.ParentId.Value].Children.Add(dict[m.Id]);
             }
             else
             {
-                roots.Add(dict[m.MenuId]);
+                roots.Add(dict[m.Id]);
             }
         }
         // Cache result (5 minutes default)

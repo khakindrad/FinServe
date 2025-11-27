@@ -16,18 +16,18 @@ public class RefreshTokenService
         var token = GenerateRandomToken(64);
         var rt = new RefreshToken { UserId = userId, Token = token, CreatedByIp = createdByIp, ExpiresAt = DateTime.UtcNow.AddDays(days)};
         _db.RefreshTokens.Add(rt);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         return rt;
     }
 
     public async Task<RefreshToken?> GetValidRefreshTokenAsync(string token) =>
-        await _db.RefreshTokens.Include(r => r.User).Where(r => r.Token == token && r.RevokedAt == null && r.ExpiresAt > DateTime.UtcNow).FirstOrDefaultAsync();
+        await _db.RefreshTokens.Include(r => r.User).Where(r => r.Token == token && r.RevokedAt == null && r.ExpiresAt > DateTime.UtcNow).FirstOrDefaultAsync().ConfigureAwait(false);
 
     public async Task RevokeAsync(RefreshToken rt, string? reason = null, string? replacedBy = null)
     {
         rt.RevokedAt = DateTime.UtcNow;
         rt.ReasonRevoked = reason;
         rt.ReplacedByToken = replacedBy;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
     }
 }

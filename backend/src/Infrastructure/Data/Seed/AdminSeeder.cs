@@ -9,25 +9,26 @@ public static class AdminSeeder
     public static async Task SeedAsync(AppDbContext context)
     {
         // Ensure DB is created
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync().ConfigureAwait(false);
 
         // 1 Create Admin Role
-        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+        var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin").ConfigureAwait(false);
         if (adminRole == null)
         {
             adminRole = new Role
             {
                 Id = 1,
                 Name = "Admin",
-                Description = "Platform administrator"
+                Description = "Platform administrator",
+                IsActive = true,
             };
 
             context.Roles.Add(adminRole);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         // 2️ Create Admin User
-        var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "admin@finserve.com");
+        var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == "admin@finserve.com").ConfigureAwait(false);
         if (adminUser == null)
         {
             var hasher = new PasswordHasher<User>();
@@ -59,12 +60,12 @@ public static class AdminSeeder
             adminUser.PasswordHash = hasher.HashPassword(adminUser, "Admin@FinServe123!");
 
             context.Users.Add(adminUser);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         // 3️ Assign Admin Role to Admin User (if not already)
         bool isAssigned = await context.UserRoles
-            .AnyAsync(ur => ur.UserId == adminUser.Id && ur.RoleId == adminRole.Id);
+            .AnyAsync(ur => ur.UserId == adminUser.Id && ur.RoleId == adminRole.Id).ConfigureAwait(false);
 
         if (!isAssigned)
         {
@@ -74,16 +75,16 @@ public static class AdminSeeder
                 RoleId = adminRole.Id
             });
 
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync().ConfigureAwait(false);
         }
 
         // 4️ Assign ALL menus to Admin Role
-        var allMenus = await context.RoleMenus.Select(m => m.RoleMenuId).ToListAsync();
+        var allMenus = await context.RoleMenus.Select(m => m.Id).ToListAsync().ConfigureAwait(false);
 
         foreach (var menuId in allMenus)
         {
             bool alreadyAssigned = await context.RoleMenus
-                .AnyAsync(rm => rm.RoleId == adminRole.Id && rm.MenuId == menuId);
+                .AnyAsync(rm => rm.RoleId == adminRole.Id && rm.MenuId == menuId).ConfigureAwait(false);
 
             if (!alreadyAssigned)
             {
@@ -95,6 +96,6 @@ public static class AdminSeeder
             }
         }
 
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync().ConfigureAwait(false);
     }
 }

@@ -1,4 +1,4 @@
-﻿using Application.Dtos;
+﻿using Application.Dtos.Users;
 using Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,31 +26,13 @@ public sealed class UserController : BaseController
     public async Task<IActionResult> GetProfile()
     {
         var userId = GetCurrentUserId();
-        var user = await _users.GetByIdAsync(userId);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
 
         if (user == null)
             return NotFound("User not found.");
 
-        var profile = new UserProfileDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            MiddleName = user.MiddleName,
-            LastName = user.LastName,
-            Mobile = user.Mobile,
-            Address = user.Address,
-            ProfileImageUrl = user.ProfileImageUrl,
-            CountryId = user.CountryId,
-            CountryName = user.Country?.Name,
-            StateId = user.StateId,
-            StateName = user.State?.Name,
-            CityId = user.CityId,
-            CityName = user.City?.Name,
-            //RoleName = user.UserRoles.Name,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
+        var profile = new UserProfileDto(user.Id,user.Email,user.FirstName,user.MiddleName,user.LastName,user.Mobile,user.Address,user.ProfileImageUrl,user.CountryId,user.Country?.Name,
+            user.StateId,user.State?.Name,user.CityId,user.City?.Name,default,user.CreatedTime,user.LastUpdatedTime);
 
         Logger.Information("Profile viewed by user {UserId}", userId);
         return Ok(profile);
@@ -63,7 +45,7 @@ public sealed class UserController : BaseController
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)
     {
         var userId = GetCurrentUserId();
-        var user = await _users.GetByIdAsync(userId);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
 
         if (user == null)
             return NotFound("User not found.");
@@ -81,10 +63,10 @@ public sealed class UserController : BaseController
         user.StateId = dto.StateId;
         user.CityId = dto.CityId;
 
-        user.UpdatedAt = DateTime.UtcNow;
+        user.LastUpdatedTime = DateTime.UtcNow;
 
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         Logger.Information("User {UserId} updated profile successfully", userId);
 

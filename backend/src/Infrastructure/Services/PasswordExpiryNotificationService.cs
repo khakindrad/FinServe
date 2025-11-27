@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
-using System.Threading.Channels;
 
 namespace Infrastructure.Services;
 
@@ -37,7 +36,7 @@ public class PasswordExpiryNotificationService
         // and who haven't already an identical alert for this expiry (to avoid duplicate emails).
         var candidates = await _db.Users
             .Where(u => u.IsActive && u.PasswordExpiryDate != null && u.PasswordExpiryDate >= now && u.PasswordExpiryDate <= reminderUntil)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
 
         var actions = 0;
         foreach (var user in candidates)
@@ -46,9 +45,9 @@ public class PasswordExpiryNotificationService
 
             // Check if we already created an alert for this expiry for this user in the last (reminderDays + 1) days
             var existing = await _db.DashboardAlerts
-                .Where(a => a.UserId == user.Id && a.Title == "Password Expiry Reminder" && a.CreatedAt >= now.AddDays(-(reminderDays + 1)))
-                .OrderByDescending(a => a.CreatedAt)
-                .FirstOrDefaultAsync(cancellationToken);
+                .Where(a => a.UserId == user.Id && a.Title == "Password Expiry Reminder" && a.CreatedTime >= now.AddDays(-(reminderDays + 1)))
+                .OrderByDescending(a => a.CreatedTime)
+                .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
             if (existing != null)
             {
@@ -69,7 +68,7 @@ public class PasswordExpiryNotificationService
                 UserId = user.Id,
                 Title = title,
                 Message = message,
-                CreatedAt = DateTime.UtcNow,
+                CreatedTime = DateTime.UtcNow,
                 IsRead = false
             };
             _db.DashboardAlerts.Add(alert);
@@ -89,7 +88,7 @@ public class PasswordExpiryNotificationService
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-                await _email.SendEmailAsync(user.Email, title, body);
+                await _email.SendEmailAsync(user.Email, title, body).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -100,7 +99,7 @@ public class PasswordExpiryNotificationService
         }
 
         if (actions > 0)
-            await _db.SaveChangesAsync(cancellationToken);
+            await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation("PasswordExpiryNotificationService completed: {Count} actions", actions);
         return actions;

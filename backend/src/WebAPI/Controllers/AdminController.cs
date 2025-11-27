@@ -1,4 +1,5 @@
-using Application.Dtos;
+using Application.Dtos.Roles;
+using Application.Dtos.Users;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -10,7 +11,7 @@ using ILogger = Serilog.ILogger;
 namespace WebAPI.Controllers;
 
 [ApiController]
-[Route("api/admin")]
+[Route("api/[controller]")]
 [Authorize(Roles = "Admin")]
 public sealed class AdminController : BaseController
 {
@@ -31,18 +32,11 @@ public sealed class AdminController : BaseController
     [HttpGet("pending-users")]
     public async Task<IActionResult> GetPendingUsers()
     {
-        var users = await _users.GetPendingApprovalsAsync();
+        var users = await _users.GetPendingApprovalsAsync().ConfigureAwait(false);
 
         if (users?.Count() > 0)
         {
-            var userDtos = users.Select(u => new PendingUserDto
-            {
-                Id = u.Id,
-                Email = u.Email,
-                FullName = u.FullName,
-                CreatedAt = u.CreatedAt,
-                UserRoles = u.UserRoles?.Select(r => r.Role.Name).ToList()
-            }).ToList();
+            var userDtos = users.Select(u => new PendingUserDto(u.Id, u.Email, u.FullName, u.UserRoles?.Select(r => r.Role.Name).ToList(), u.CreatedTime)).ToList();
 
             return Ok(userDtos);
         }
@@ -55,7 +49,7 @@ public sealed class AdminController : BaseController
     [HttpGet("users")]
     public async Task<IActionResult> GetAllUsers()
     {
-        var allUsers = await _users.GetUsersAsync();
+        var allUsers = await _users.GetUsersAsync().ConfigureAwait(false);
 
         if (allUsers?.Count() > 0)
         {
@@ -85,8 +79,8 @@ public sealed class AdminController : BaseController
                     LockoutEndAt = u.LockoutEndAt,
                     MfaEnabled = u.MfaEnabled,
                     ProfileImageUrl = u.ProfileImageUrl,
-                    CreatedAt = u.CreatedAt,
-                    UpdatedAt = u.UpdatedAt,
+                    CreatedAt = u.CreatedTime,
+                    UpdatedAt = u.LastUpdatedTime,
                 })
                 );
         }
@@ -99,17 +93,12 @@ public sealed class AdminController : BaseController
     [HttpGet("roles")]
     public async Task<IActionResult> GetAllRoles()
     {
-        var roles = await _userRoleService.GetAllRolesAsync();
+        var roles = await _userRoleService.GetAllRolesAsync().ConfigureAwait(false);
 
         if (roles?.Count > 0)
         {
             return Ok(roles.Select(r =>
-            new RoleDto
-            {
-                Id = r.Id,
-                Name = r.Name,
-                Menus = r.RoleMenus.Select(rm => rm.MenuMaster.Name).ToList()
-            }));
+            new RoleDto(r.Id, r.Name, r.Description, [.. r.RoleMenus.Select(rm => rm.MenuMaster.Name)])));
         }
         else
         {
@@ -120,18 +109,13 @@ public sealed class AdminController : BaseController
     [HttpGet("user/{userId}")]
     public async Task<IActionResult> GetUserRoles(int userId)
     {
-        var userRoles = await _userRoleService.GetUserRolesAsync(userId);
+        var userRoles = await _userRoleService.GetUserRolesAsync(userId).ConfigureAwait(false);
 
         if (userRoles?.Count > 0)
         {
             return Ok(userRoles
                 .Select(ur =>
-                new RoleDto
-                {
-                    Id = ur.Id,
-                    Name = ur.Name,
-                    Menus = ur.RoleMenus.Select(rm => rm.MenuMaster.Name).ToList()
-                }));
+                new RoleDto(ur.Id, ur.Name, ur.Description, [.. ur.RoleMenus.Select(rm => rm.MenuMaster.Name)])));
         }
         else
         {
@@ -142,7 +126,7 @@ public sealed class AdminController : BaseController
     [HttpPost("assign")]
     public async Task<IActionResult> AssignRoles([FromBody] AssignRoleDto dto)
     {
-        await _userRoleService.AssignRolesAsync(dto.UserId, dto.RoleIds);
+        await _userRoleService.AssignRolesAsync(dto.UserId, dto.RoleIds).ConfigureAwait(false);
 
         return Ok("Roles assigned successfully.");
     }
@@ -156,7 +140,7 @@ public sealed class AdminController : BaseController
     [HttpPut("unlock/{userId}")]
     public async Task<IActionResult> UnlockUser(int userId, [FromBody] dynamic? body = null)
     {
-        var user = await _users.GetByIdAsync(userId);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
@@ -169,8 +153,8 @@ public sealed class AdminController : BaseController
             user.IsActive = true;
         }
 
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         // Record in LoginHistory (audit)
         try
@@ -184,11 +168,11 @@ public sealed class AdminController : BaseController
                 LogoutTime = null,
                 IpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Device = Request.Headers["User-Agent"].ToString(),
-                Status = "SUCCESS",
+                Status = Status.SUCCESS,
                 Message = "Account unlocked by admin"
             };
             _db.LoginHistory.Add(history);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync().ConfigureAwait(false);
         }
         catch (Exception hx)
         {
@@ -209,7 +193,7 @@ public sealed class AdminController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-            await _email.SendEmailAsync(user.Email, "Your account has been unlocked", emailBody);
+            await _email.SendEmailAsync(user.Email, "Your account has been unlocked", emailBody).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -225,10 +209,10 @@ public sealed class AdminController : BaseController
                 Title = "Account Unlocked",
                 Message = "Your account has been unlocked by an administrator. Please login and verify.",
                 IsRead = false,
-                CreatedAt = DateTime.UtcNow
+                CreatedTime = DateTime.UtcNow
             };
             _db.DashboardAlerts.Add(alert);
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -245,7 +229,7 @@ public sealed class AdminController : BaseController
     {
         var expired = db.PasswordResetTokens.Where(t => t.ExpiresAt < DateTime.UtcNow);
         db.PasswordResetTokens.RemoveRange(expired);
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync().ConfigureAwait(false);
 
         return Ok("Expired tokens removed.");
     }
@@ -253,13 +237,13 @@ public sealed class AdminController : BaseController
     [HttpPut("approve/{id}")]
     public async Task<IActionResult> ApproveUser(int id)
     {
-        var user = await _users.GetByIdAsync(id);
+        var user = await _users.GetByIdAsync(id).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
         user.IsApproved = true;
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         string emailBody = $@"
         <p>Hello <strong>{user.FullName}</strong>,</p>
@@ -271,7 +255,7 @@ public sealed class AdminController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Account approved", emailBody);
+        await _email.SendEmailAsync(user.Email, "Account approved", emailBody).ConfigureAwait(false);
 
         return Ok("Approved.");
     }

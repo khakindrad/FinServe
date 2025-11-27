@@ -1,4 +1,6 @@
-using Application.Dtos;
+using Application.Dtos.Auth;
+using Application.Dtos.Menus;
+using Application.Dtos.Users;
 using Core.Entities;
 using Core.Interfaces;
 using Infrastructure.Data;
@@ -55,7 +57,7 @@ public sealed class AuthController : BaseController
         };
 
         _db.EmailVerificationTokens.Add(record);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         string verificationUrl = $"{Request.Scheme}://{Request.Host}/api/auth/verify-email?email={user.Email}&token={token}";
 
@@ -72,7 +74,7 @@ public sealed class AuthController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body);
+        await _email.SendEmailAsync(user.Email, "Verify your account - FinServe", body).ConfigureAwait(false);
 
         return Ok();
     }
@@ -103,6 +105,82 @@ public sealed class AuthController : BaseController
         var token = new JwtSecurityToken(issuer: _config["Jwt:Issuer"], audience: _config["Jwt:Audience"], claims: claims, expires: DateTime.UtcNow.AddMinutes(_config.GetValue("Jwt:ExpiryMinutes", 15)), signingCredentials: creds);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
+
+    private async Task<List<MenuTreeDto>> GetUserMenus(int userId)
+    {
+        //1 CHECK IF USER IS ADMIN
+        bool isAdmin = await _db.UserRoles
+        .Include(ur => ur.Role)
+        .AnyAsync(ur => ur.UserId == userId && ur.Role.Name == "Admin").ConfigureAwait(false);
+
+        List<MenuMaster> efMenus;
+
+        //2 IF ADMIN --> RETURN ALL MENUS
+        if (isAdmin)
+        {
+            efMenus = await _db.MenuMaster
+                .Include(m => m.Parent)
+                .OrderBy(m => m.ParentId)
+                .ThenBy(m => m.Sequence)
+                .ToListAsync().ConfigureAwait(false);
+        }
+        //3 IF NOT ADMIN --> RETURN ROLE BASED MENUS
+        else
+        {
+            efMenus = await _db.UserRoles
+            .Where(ur => ur.UserId == userId)
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RoleMenus)
+                    .ThenInclude(rm => rm.MenuMaster)
+                        .ThenInclude(m => m.Parent)
+            .SelectMany(ur => ur.Role.RoleMenus.Select(rm => rm.MenuMaster))
+            .Distinct()
+            .OrderBy(m => m.ParentId)
+            .ThenBy(m => m.Sequence)
+            .ToListAsync().ConfigureAwait(false);
+        }
+
+        //4 CONVERT TO TREE
+        var menuTree = BuildMenuTree(efMenus);
+        return menuTree;
+    }
+
+    private List<MenuTreeDto> BuildMenuTree(List<MenuMaster> menus)
+    {
+        var lookup = menus.ToDictionary(m => m.Id, m => new MenuTreeDto(m.Id, m.Name, m.Route ?? "", m.Icon ?? "", m.Sequence)
+        {
+            Id = m.Id,
+            Name = m.Name,
+            Route = m.Route ?? "",
+            Icon = m.Icon ?? "",
+            Order = m.Sequence
+        });
+
+        List<MenuTreeDto> roots = new();
+
+        foreach (var menu in menus)
+        {
+            if (menu.ParentId == null)
+            {
+                // Root menu
+                roots.Add(lookup[menu.Id]);
+            }
+            else if (lookup.ContainsKey(menu.ParentId.Value))
+            {
+                // Child menu
+                lookup[menu.ParentId.Value].Children.Add(lookup[menu.Id]);
+            }
+        }
+
+        // Sort children
+        foreach (var item in lookup.Values)
+        {
+            item.Children = [.. item.Children.OrderBy(c => c.Order)];
+        }
+
+        // Sort roots
+        return [.. roots.OrderBy(r => r.Order)];
+    }
     #endregion
 
     [HttpPost("register")]
@@ -116,7 +194,7 @@ public sealed class AuthController : BaseController
         if (!valid)
             return BadRequest(message);
 
-        var existing = await _users.GetByEmailAsync(dto.Email);
+        var existing = await _users.GetByEmailAsync(dto.Email).ConfigureAwait(false);
 
         if (existing != null)
             return BadRequest("Email already exists");
@@ -146,13 +224,13 @@ public sealed class AuthController : BaseController
 
         user.PasswordHash = hasher.HashPassword(user, dto.Password);
 
-        await _users.AddAsync(user);
-        await _users.SaveChangesAsync();
+        await _users.AddAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
-        await historyService.AddToHistoryAsync(user);
+        await historyService.AddToHistoryAsync(user).ConfigureAwait(false);
 
-        var emailSendResult = await SendVerificationEmail(user);
+        var emailSendResult = await SendVerificationEmail(user).ConfigureAwait(false);
 
         if (emailSendResult is OkResult)
         {
@@ -178,24 +256,10 @@ public sealed class AuthController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-            await _email.SendEmailAsync(adminEmail, "New user pending approval", emailBody);
-        }            
+            await _email.SendEmailAsync(adminEmail, "New user pending approval", emailBody).ConfigureAwait(false);
+        }
 
-        var registerResponseDto = new RegisterResponseDto
-        {
-            Email = dto.Email,
-            Mobile = dto.Mobile,
-            Gender = dto.Gender,
-            DateOfBirth = dto.DateOfBirth,
-            FirstName = dto.FirstName,
-            MiddleName = dto.MiddleName,
-            LastName = dto.LastName,
-            CountryId = dto.CountryId,
-            CityId = dto.CityId,
-            StateId = dto.StateId,
-            Address = dto.Address,
-            PinCode = dto.PinCode,            
-        };
+        var registerResponseDto = new RegisterResponseDto(dto.Email, dto.Mobile, dto.Gender, dto.DateOfBirth, dto.FirstName, dto.MiddleName, dto.LastName, dto.CountryId, dto.CityId, dto.StateId, dto.Address, dto.PinCode);
 
         return Created(registerResponseDto, "Registered. Verify email & mobile and wait for admin approval.");
     }
@@ -206,7 +270,7 @@ public sealed class AuthController : BaseController
         var record = await _db.EmailVerificationTokens
             .Where(x => x.Email == email && x.Token == token && !x.IsUsed)
             .OrderByDescending(x => x.Id)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync().ConfigureAwait(false);
 
         if (record == null)
             return BadRequest("Invalid or already used token.");
@@ -215,14 +279,14 @@ public sealed class AuthController : BaseController
             return BadRequest("Verification link expired.");
 
         record.IsUsed = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         // Mark user verified
-        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email).ConfigureAwait(false);
         if (user != null)
         {
             user.EmailVerified = true;
-            await _db.SaveChangesAsync();
+            await _db.SaveChangesAsync().ConfigureAwait(false);
         }
 
         return Ok("Email verified successfully!");
@@ -231,11 +295,11 @@ public sealed class AuthController : BaseController
     [HttpPost("send-verification-email")]
     public async Task<IActionResult> SendVerificationMail([FromBody] SendVerificationMailDto sendVerificationMailDto)
     {
-        var user = await _users.GetByIdAsync(sendVerificationMailDto.UserId);
+        var user = await _users.GetByIdAsync(sendVerificationMailDto.UserId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
-        var emailSendResult = await SendVerificationEmail(user);
+        var emailSendResult = await SendVerificationEmail(user).ConfigureAwait(false);
 
         if (emailSendResult is OkResult)
         {
@@ -254,19 +318,25 @@ public sealed class AuthController : BaseController
     public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto updateEmailDto)
     {
         int userId = updateEmailDto.UserId;
-        var user = await _users.GetByIdAsync(userId);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
+
         if (user == null)
             return NotFound("User not found.");
+
+        var existing = await _users.GetByEmailAsync(updateEmailDto.NewEmail).ConfigureAwait(false);
+
+        if (existing != null)
+            return BadRequest("Email already exists");
 
         user.Email = updateEmailDto.NewEmail;
 
         user.EmailVerified = false;
 
-        await _users.UpdateAsync(user);
+        await _users.UpdateAsync(user).ConfigureAwait(false);
 
-        await _users.SaveChangesAsync();
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
-        var emailSendResult = await SendVerificationEmail(user);
+        var emailSendResult = await SendVerificationEmail(user).ConfigureAwait(false);
 
         if (emailSendResult is OkResult)
         {
@@ -285,17 +355,22 @@ public sealed class AuthController : BaseController
     public async Task<IActionResult> UpdateMobile([FromBody] UpdateMobileDto updateMobileDto)
     {
         int userId = updateMobileDto.UserId;
-        var user = await _users.GetByIdAsync(userId);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
+
+        var existing = await _users.GetByMobileAsync(updateMobileDto.NewMobile).ConfigureAwait(false);
+
+        if (existing != null)
+            return BadRequest("Mobile No already exists");
 
         user.Mobile = updateMobileDto.NewMobile;
 
         user.MobileVerified = false;
 
-        await _users.UpdateAsync(user);
+        await _users.UpdateAsync(user).ConfigureAwait(false);
 
-        await _users.SaveChangesAsync();
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         return Ok("Mobile Number updated successfully.");
     }
@@ -303,7 +378,7 @@ public sealed class AuthController : BaseController
     [HttpPost("send-otp")]
     public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
     {
-        var response = await _mobileVerificationService.SendOtpAsync(dto.UserId);
+        var response = await _mobileVerificationService.SendOtpAsync(dto.UserId).ConfigureAwait(false);
 
         return StatusCode(response.StatusCode, response);
     }
@@ -311,7 +386,7 @@ public sealed class AuthController : BaseController
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
     {
-        var response = await _mobileVerificationService.VerifyOtpAsync(dto.UserId, dto.Otp);
+        var response = await _mobileVerificationService.VerifyOtpAsync(dto.UserId, dto.Otp).ConfigureAwait(false);
 
         return StatusCode(response.StatusCode, response);
     }
@@ -319,20 +394,12 @@ public sealed class AuthController : BaseController
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        var user = await _users.GetByEmailAsync(dto.Email);
+        var user = await _users.GetByEmailAsync(dto.Email).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
-        var responseDto = new LoginResponseUserDto
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FullName = user.FullName,
-            EmailVerified = user.EmailVerified,
-            MobileVerified = user.MobileVerified,
-            ProfileImageUrl = user.ProfileImageUrl,
-            Roles = user.UserRoles.Select(r => r.Role.Name)?.ToList(),
-        };
+        var responseDto = new LoginResponseUserDto(user.Id, user.FullName, user.Email, user.EmailVerified, user.MobileVerified, user.ProfileImageUrl,
+            user.UserRoles.Select(r => r.Role.Name)?.ToList(), await GetUserMenus(user.Id).ConfigureAwait(false));
 
         if (!user.EmailVerified)
             return Forbid("Email must be verified.", responseDto);
@@ -356,14 +423,14 @@ public sealed class AuthController : BaseController
                 user.LockoutEndAt = DateTime.UtcNow.AddMinutes(_config.GetValue("Security:Lockout:LockoutMinutes", 15));
                 user.FailedLoginCount = 0;
             }
-            await _users.UpdateAsync(user);
-            await _users.SaveChangesAsync();
+            await _users.UpdateAsync(user).ConfigureAwait(false);
+            await _users.SaveChangesAsync().ConfigureAwait(false);
             return Unauthorized("Invalid credentials.");
         }
 
         user.FailedLoginCount = 0;
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
 
         if (user.MfaEnabled)
         {
@@ -374,7 +441,7 @@ public sealed class AuthController : BaseController
         var accessToken = GenerateJwt(user);
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        var refresh = await _rtService.CreateRefreshTokenAsync(user.Id, ip, days: 30);
+        var refresh = await _rtService.CreateRefreshTokenAsync(user.Id, ip, days: 30).ConfigureAwait(false);
 
         //Correct cookie append
         var cookieOptions = new CookieOptions
@@ -389,11 +456,7 @@ public sealed class AuthController : BaseController
         Response.Cookies.Append("refreshToken", refresh.Token, cookieOptions);
 
         return Ok("Login successful.",
-            new LoginResponseDto
-            {
-                AccessToken = accessToken,
-                User = responseDto,
-            });
+            new LoginResponseDto(accessToken, responseDto));
     }
 
     [HttpGet("refresh")]
@@ -404,16 +467,16 @@ public sealed class AuthController : BaseController
         if (string.IsNullOrEmpty(refreshToken))
             return Unauthorized("Refresh token missing.");
 
-        var rt = await _rtService.GetValidRefreshTokenAsync(refreshToken);
+        var rt = await _rtService.GetValidRefreshTokenAsync(refreshToken).ConfigureAwait(false);
 
         if (rt == null)
             return Unauthorized("Invalid refresh token.");
 
-        var newRt = await _rtService.CreateRefreshTokenAsync(rt.UserId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", 30);
+        var newRt = await _rtService.CreateRefreshTokenAsync(rt.UserId, HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown", 30).ConfigureAwait(false);
 
-        await _rtService.RevokeAsync(rt, "rotated", newRt.Token);
+        await _rtService.RevokeAsync(rt, "rotated", newRt.Token).ConfigureAwait(false);
 
-        var user = await _users.GetByIdAsync(rt.UserId);
+        var user = await _users.GetByIdAsync(rt.UserId).ConfigureAwait(false);
 
         if (user == null)
             return Unauthorized("User not found.");
@@ -445,10 +508,10 @@ public sealed class AuthController : BaseController
         var token = Request.Cookies["refreshToken"]; // read cookie
         if (!string.IsNullOrWhiteSpace(token))
         {
-            var rt = await _rtService.GetValidRefreshTokenAsync(token);
+            var rt = await _rtService.GetValidRefreshTokenAsync(token).ConfigureAwait(false);
 
             if (rt != null)
-                await _rtService.RevokeAsync(rt, "logout");
+                await _rtService.RevokeAsync(rt, "logout").ConfigureAwait(false);
         }
         // delete cookie
         Response.Cookies.Delete("refreshToken", new CookieOptions
@@ -460,12 +523,12 @@ public sealed class AuthController : BaseController
         });
         return Ok("Logged out.");
     }
-    
+
 
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto, [FromServices] PasswordResetService resetService)
     {
-        var user = await _users.GetByEmailAsync(forgotPasswordDto.Email);
+        var user = await _users.GetByEmailAsync(forgotPasswordDto.Email).ConfigureAwait(false);
         if (user == null)
         {
             // Return same message to prevent enumeration
@@ -474,7 +537,7 @@ public sealed class AuthController : BaseController
 
         var expiryHours = _config.GetValue("Smtp:VerificationExpiryHours", 24);
 
-        var tokenEntity = await resetService.CreateTokenAsync(user.Id, (int)TimeSpan.FromHours(expiryHours).TotalMinutes);
+        var tokenEntity = await resetService.CreateTokenAsync(user.Id, (int)TimeSpan.FromHours(expiryHours).TotalMinutes).ConfigureAwait(false);
 
         var resetUrl = $"{forgotPasswordDto.RedirectUrl}/{Uri.EscapeDataString(tokenEntity.Token)}";
 
@@ -490,7 +553,7 @@ public sealed class AuthController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Password reset request", body);
+        await _email.SendEmailAsync(user.Email, "Password reset request", body).ConfigureAwait(false);
 
         return Ok("If account exists, a reset link has been sent.");
     }
@@ -498,7 +561,7 @@ public sealed class AuthController : BaseController
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto, [FromServices] PasswordResetService resetService)
     {
-        var user = await resetService.ValidateTokenAsync(resetPasswordDto.Token);
+        var user = await resetService.ValidateTokenAsync(resetPasswordDto.Token).ConfigureAwait(false);
         if (user == null)
         {
             return BadRequest("Invalid or expired reset token.");
@@ -513,7 +576,7 @@ public sealed class AuthController : BaseController
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
 
-        if (await historyService.IsPasswordReusedAsync(user, resetPasswordDto.NewPassword))
+        if (await historyService.IsPasswordReusedAsync(user, resetPasswordDto.NewPassword).ConfigureAwait(false))
             return BadRequest("You cannot reuse any of your last passwords.");
 
         var hasher = new PasswordHasher<User>();
@@ -522,9 +585,9 @@ public sealed class AuthController : BaseController
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
-        await historyService.AddToHistoryAsync(user);
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
+        await historyService.AddToHistoryAsync(user).ConfigureAwait(false);
 
         string body = $@"
         <p>Hello <strong>{user.FullName}</strong>,</p>
@@ -535,7 +598,7 @@ public sealed class AuthController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Password Reset Successful", body);
+        await _email.SendEmailAsync(user.Email, "Password Reset Successful", body).ConfigureAwait(false);
 
         return Ok("Password reset successful.");
     }
@@ -544,7 +607,7 @@ public sealed class AuthController : BaseController
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
     {
-        var user = await _users.GetByIdAsync(changePasswordDto.Id);
+        var user = await _users.GetByIdAsync(changePasswordDto.Id).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
@@ -567,16 +630,16 @@ public sealed class AuthController : BaseController
 
         var historyService = HttpContext.RequestServices.GetRequiredService<PasswordHistoryService>();
 
-        if (await historyService.IsPasswordReusedAsync(user, changePasswordDto.NewPassword))
+        if (await historyService.IsPasswordReusedAsync(user, changePasswordDto.NewPassword).ConfigureAwait(false))
             return BadRequest("You cannot reuse any of your last passwords.");
 
         user.PasswordHash = hasher.HashPassword(user, changePasswordDto.NewPassword);
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
-        await _users.UpdateAsync(user);
-        await _users.SaveChangesAsync();
-        await historyService.AddToHistoryAsync(user);
+        await _users.UpdateAsync(user).ConfigureAwait(false);
+        await _users.SaveChangesAsync().ConfigureAwait(false);
+        await historyService.AddToHistoryAsync(user).ConfigureAwait(false);
 
         string body = $@"
         <p>Hello <strong>{user.FullName}</strong>,</p>
@@ -587,7 +650,7 @@ public sealed class AuthController : BaseController
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
-        await _email.SendEmailAsync(user.Email, "Password Changed Successful", body);
+        await _email.SendEmailAsync(user.Email, "Password Changed Successful", body).ConfigureAwait(false);
 
         return Ok("Password Changed successful.");
     }

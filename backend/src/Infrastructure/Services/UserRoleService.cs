@@ -14,7 +14,7 @@ public class UserRoleService : IUserRoleService
 
     public async Task<List<Role>> GetAllRolesAsync()
     {
-        return await _db.Roles.AsNoTracking().ToListAsync();
+        return await _db.Roles.AsNoTracking().ToListAsync().ConfigureAwait(false);
     }
 
     public async Task<List<Role>> GetUserRolesAsync(int userId)
@@ -24,13 +24,13 @@ public class UserRoleService : IUserRoleService
             .Include(ur => ur.Role)
             .Select(ur => ur.Role)
             .AsNoTracking()
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
     }
 
     public async Task AssignRolesAsync(int userId, List<int> roleIds)
     {
         // remove existing roles
-        var existing = await _db.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
+        var existing = await _db.UserRoles.Where(ur => ur.UserId == userId).ToListAsync().ConfigureAwait(false);
         _db.UserRoles.RemoveRange(existing);
 
         // add new roles
@@ -43,6 +43,6 @@ public class UserRoleService : IUserRoleService
             });
         }
 
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
     }
 }

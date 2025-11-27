@@ -1,11 +1,10 @@
 namespace Core.Entities;
 
-public class Role
+public sealed class Role : BaseEntity
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; }
-    public bool IsActive { get; set; } = true;
-    public ICollection<UserRole> UserRoles { get; set; } = [];
-    public ICollection<RoleMenu> RoleMenus { get; set; } = [];
+    public required string Name { get; set; }
+    public required string Description { get; set; }
+    public required bool IsActive { get; set; } = true;
+    public List<UserRole> UserRoles { get; set; }
+    public List<RoleMenu> RoleMenus { get; set; }
 }

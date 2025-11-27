@@ -34,17 +34,17 @@ public class PasswordExpiryHostedService : BackgroundService
                     if (next <= now) next = next.AddDays(1);
                     var delay = next - now;
                     _logger.LogInformation("PasswordExpiryHostedService waiting {Delay} until next run at {Next}", delay, next);
-                    await Task.Delay(delay, stoppingToken);
-                    await svc.RunAsync(stoppingToken);
+                    await Task.Delay(delay, stoppingToken).ConfigureAwait(false);
+                    await svc.RunAsync(stoppingToken).ConfigureAwait(false);
                     // then loop to wait ~24h
-                    await Task.Delay(interval, stoppingToken);
+                    await Task.Delay(interval, stoppingToken).ConfigureAwait(false);
                 }
                 else
                 {
                     // simple every-24-hours schedule
                     _logger.LogInformation("PasswordExpiryHostedService running immediate check");
-                    await svc.RunAsync(stoppingToken);
-                    await Task.Delay(interval, stoppingToken);
+                    await svc.RunAsync(stoppingToken).ConfigureAwait(false);
+                    await Task.Delay(interval, stoppingToken).ConfigureAwait(false);
                 }
             }
             catch (TaskCanceledException) { /* shutting down */ }
@@ -52,7 +52,7 @@ public class PasswordExpiryHostedService : BackgroundService
             {
                 _logger.LogError(ex, "Hosted service error");
                 // On error, wait a short time then retry
-                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
             }
         }
     }

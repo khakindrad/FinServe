@@ -13,7 +13,7 @@ public sealed class DevController(ILogger logger) : BaseController(logger.ForCon
     [HttpPost("run-password-expiry")]
     public async Task<IActionResult> Run([FromServices] PasswordExpiryNotificationService svc)
     {
-        var cnt = await svc.RunAsync();
+        var cnt = await svc.RunAsync().ConfigureAwait(false);
 
         return Ok($"Run completed for count {cnt}.");
     }

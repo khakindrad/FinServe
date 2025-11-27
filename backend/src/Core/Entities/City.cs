@@ -1,9 +1,8 @@
 namespace Core.Entities;
 
-public class City
+public sealed class City : BaseEntity
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int StateId { get; set; }
+    public required string Name { get; set; }
+    public required int StateId { get; set; }
     public State State { get; set; } = null!;
 }

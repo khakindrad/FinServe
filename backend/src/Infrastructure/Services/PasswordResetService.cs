@@ -18,7 +18,7 @@ public class PasswordResetService
         // Invalidate old tokens
         var existing = await _db.PasswordResetTokens
             .Where(x => x.UserId == userId && !x.Used && x.ExpiresAt > DateTime.UtcNow)
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         foreach (var t in existing)
         {
@@ -32,11 +32,12 @@ public class PasswordResetService
         {
             UserId = userId,
             Token = token,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
+            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
+            Used = false
         };
 
         _db.PasswordResetTokens.Add(prt);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         return prt;
     }
 
@@ -44,12 +45,12 @@ public class PasswordResetService
     {
         var record = await _db.PasswordResetTokens
             .Include(p => p.User)
-            .FirstOrDefaultAsync(p => p.Token == token && !p.Used && p.ExpiresAt > DateTime.UtcNow);
+            .FirstOrDefaultAsync(p => p.Token == token && !p.Used && p.ExpiresAt > DateTime.UtcNow).ConfigureAwait(false);
 
         if (record == null) return null;
 
         record.Used = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
         return record.User;
     }
 }

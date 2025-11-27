@@ -1,6 +1,0 @@
-﻿namespace Application.Dtos;
-
-public class SendOtpDto
-{
-    public required int UserId { get; set; }
-}

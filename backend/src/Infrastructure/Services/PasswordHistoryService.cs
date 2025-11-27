@@ -22,9 +22,9 @@ public class PasswordHistoryService
         var lastN = _config.GetValue("Security:PasswordHistoryCount", 5);
         var histories = await _db.PasswordHistories
             .Where(p => p.UserId == user.Id)
-            .OrderByDescending(p => p.CreatedAt)
+            .OrderByDescending(p => p.CreatedTime)
             .Take(lastN)
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         foreach (var old in histories)
         {
@@ -41,10 +41,10 @@ public class PasswordHistoryService
         {
             UserId = user.Id,
             PasswordHash = user.PasswordHash,
-            CreatedAt = DateTime.UtcNow
+            CreatedTime = DateTime.UtcNow
         };
         _db.PasswordHistories.Add(history);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
     }
 
     private bool VerifyHashedPassword(string hash, string password)

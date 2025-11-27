@@ -1,13 +1,11 @@
 namespace Core.Entities;
 
-public class DashboardAlert
+public sealed class DashboardAlert : BaseEntity
 {
-    public int Id { get; set; }
     public int UserId { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
-    public bool IsRead { get; set; } = false;
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsRead { get; set; }
 
-    public virtual User User { get; set; }
+    public User? User { get; set; }
 }

@@ -27,6 +27,6 @@ public sealed class EmailSender : IEmailSender
             EnableSsl = true
         };
         var msg = new MailMessage(from, to, subject, html) { IsBodyHtml = true };
-        await client.SendMailAsync(msg);
+        await client.SendMailAsync(msg).ConfigureAwait(false);
     }
 }

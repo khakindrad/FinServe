@@ -1,13 +1,10 @@
 namespace Core.Entities;
 
-public class PasswordResetToken
+public sealed class PasswordResetToken : BaseEntity
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public string Token { get; set; } = string.Empty;
+    public required int UserId { get; set; }
+    public required string Token { get; set; }
     public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddMinutes(30);
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public bool Used { get; set; } = false;
-
-    public virtual User User { get; set; }
+    public required bool Used { get; set; }
+    public User? User { get; set; }
 }

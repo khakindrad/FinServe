@@ -19,12 +19,12 @@ public sealed class ExceptionMiddleware
     {
         try
         {
-            await _next(httpContext);
+            await _next(httpContext).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _logger.Error(ex, "Unhandled exception");
-            await HandleExceptionAsync(httpContext, ex);
+            await HandleExceptionAsync(httpContext, ex).ConfigureAwait(false);
         }
     }
 
@@ -43,6 +43,6 @@ public sealed class ExceptionMiddleware
 
         var json = JsonSerializer.Serialize(response);
 
-        await context.Response.WriteAsync(json);
+        await context.Response.WriteAsync(json).ConfigureAwait(false);
     }
 }

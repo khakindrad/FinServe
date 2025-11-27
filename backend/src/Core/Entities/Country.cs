@@ -1,11 +1,10 @@
 namespace Core.Entities;
 
-public class Country
+public sealed class Country : BaseEntity
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string IsoCode { get; set; } = string.Empty;
-    public string MobileCode { get; set; } = string.Empty;
+    public required string Name { get; set; }
+    public required string IsoCode { get; set; }
+    public required string MobileCode { get; set; }
 
     public ICollection<State> States { get; set; } = new List<State>();
 }

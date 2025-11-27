@@ -19,11 +19,7 @@ public sealed class MasterController : BaseController
     {
         var genders = Enum.GetValues(typeof(Gender))
             .Cast<Gender>()
-            .Select(g => new GenderDto
-            {
-                Id = (int)g,
-                Name = g.ToString()
-            })
+            .Select(g => new GenderDto((int)g, g.ToString()))
             .ToList();
 
         return Ok(genders);

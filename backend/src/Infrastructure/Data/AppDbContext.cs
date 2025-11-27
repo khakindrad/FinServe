@@ -34,11 +34,11 @@ public class AppDbContext : DbContext
             b.HasKey(r => r.Id);
             b.Property(r => r.Name).IsRequired().HasMaxLength(100);
             b.HasData(
-                new Role { Id = 1, Name = "Admin", Description = "Platform administrator" },
-                new Role { Id = 2, Name = "Employee", Description = "Internal employee" },
-                new Role { Id = 3, Name = "Dealer", Description = "Car dealer" },
-                new Role { Id = 4, Name = "Banker", Description = "Bank representative" },
-                new Role { Id = 5, Name = "Customer", Description = "End customer" }
+                new Role { Id = 1, Name = "Admin", Description = "Platform administrator", IsActive = true },
+                new Role { Id = 2, Name = "Employee", Description = "Internal employee", IsActive = true },
+                new Role { Id = 3, Name = "Dealer", Description = "Car dealer" , IsActive = true },
+                new Role { Id = 4, Name = "Banker", Description = "Bank representative" , IsActive = true },
+                new Role { Id = 5, Name = "Customer", Description = "End customer" , IsActive = true }
             );
         });
 
@@ -129,7 +129,11 @@ public class AppDbContext : DbContext
 
         // USER <--> ROLE (Join Table)
         modelBuilder.Entity<UserRole>()
-            .HasKey(ur => new { ur.UserId, ur.RoleId });
+            .HasKey(c => c.Id);
+
+        modelBuilder.Entity<UserRole>()
+            .HasIndex(ur => new { ur.UserId, ur.RoleId })
+            .IsUnique();
 
         modelBuilder.Entity<UserRole>()
             .HasOne(ur => ur.User)
@@ -143,7 +147,11 @@ public class AppDbContext : DbContext
 
         // ROLE <--> MENU (Join Table)
         modelBuilder.Entity<RoleMenu>()
-            .HasKey(rm => new { rm.RoleId, rm.MenuId });
+            .HasKey(rm => rm.Id);
+
+        modelBuilder.Entity<RoleMenu>()
+            .HasIndex(rm => new { rm.RoleId, rm.MenuId })
+            .IsUnique();
 
         modelBuilder.Entity<RoleMenu>()
         .HasOne(rm => rm.Role)
@@ -156,12 +164,46 @@ public class AppDbContext : DbContext
         .HasForeignKey(rm => rm.MenuId);
 
         modelBuilder.Entity<MenuMaster>()
-            .HasKey(m => m.MenuId);
+            .HasKey(m => m.Id);
 
         modelBuilder.Entity<MenuMaster>()
-            .HasMany(m => m.Children)
-            .WithOne()
-            .HasForeignKey(m => m.ParentId)
-            .OnDelete(DeleteBehavior.Restrict);
+    .HasOne(m => m.Parent)
+    .WithMany(m => m.Children)
+    .HasForeignKey(m => m.ParentId)
+    .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<MenuMaster>().HasData(
+            new MenuMaster { Id = 1, Name = "Dashboard", Route = "/dashboard", ParentId = null, Sequence = 1 },
+            new MenuMaster { Id = 2, Name = "Masters", Route = "#", ParentId = null, Sequence = 2 },
+            new MenuMaster { Id = 3, Name = "Users", Route = "#", ParentId = null, Sequence = 3 }
+        );
+
+        modelBuilder.Entity<MenuMaster>().HasData(
+            new MenuMaster { Id = 4, Name = "Countries", Route = "/country", ParentId = 2, Sequence = 1 },
+            new MenuMaster { Id = 5, Name = "States", Route = "/state", ParentId = 2, Sequence = 2 },
+            new MenuMaster { Id = 6, Name = "Cities", Route = "/city", ParentId = 2, Sequence = 3 },
+            new MenuMaster { Id = 7, Name = "Roles", Route = "/roles", ParentId = 3, Sequence = 1 },
+            new MenuMaster { Id = 8, Name = "Menus", Route = "/menus", ParentId = 3, Sequence = 2 }
+        );
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var entries = ChangeTracker.Entries<BaseEntity>();
+
+        foreach (var entry in entries)
+        {
+            if (entry.State == EntityState.Added)
+            {
+                entry.Entity.CreatedTime = DateTime.UtcNow;
+                entry.Entity.LastUpdatedTime = DateTime.UtcNow;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.LastUpdatedTime = DateTime.UtcNow;
+            }
+        }
+
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

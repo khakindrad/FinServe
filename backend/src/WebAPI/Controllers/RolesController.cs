@@ -1,0 +1,122 @@
+﻿using Application.Dtos.Menus;
+using Application.Dtos.Roles;
+using Core.Entities;
+using Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ILogger = Serilog.ILogger;
+
+namespace WebAPI.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
+public sealed class RolesController : BaseController
+{
+    private readonly AppDbContext _db;
+    public RolesController(ILogger logger, AppDbContext db)
+        : base(logger.ForContext<RolesController>())
+    {
+        _db = db;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        var roles = await _db.Roles
+            .Select(r => new RoleDto(r.Id, r.Name, r.Description, r.RoleMenus.Select(rm => rm.MenuMaster.Name).ToList()))
+            .ToListAsync().ConfigureAwait(false);
+
+        return Ok(roles);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var r = await _db.Roles.FindAsync(id).ConfigureAwait(false);
+
+        if (r == null)
+            return NotFound($"Role not found with id {id}");
+
+        return Ok(new RoleDto(r.Id, r.Name, r.Description, [.. r.RoleMenus.Select(rm => rm.MenuMaster.Name)]));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post(CreateRoleDto dto)
+    {
+        var r = new Role { Name = dto.Name, Description = dto.Description, IsActive = dto.IsActive };
+        _db.Roles.Add(r);
+
+        await _db.SaveChangesAsync().ConfigureAwait(false);
+
+        return Created(r, "Role created.");
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Put(int id, UpdateRoleDto dto)
+    {
+        var r = await _db.Roles.FindAsync(id).ConfigureAwait(false);
+        if (r == null)
+            return NotFound($"Role not found with id {id}");
+
+        r.Name = dto.Name;
+        r.Description = dto.Description;
+        r.IsActive = dto.IsActive;
+        await _db.SaveChangesAsync().ConfigureAwait(false);
+
+        return Created(r, "Role updated.");
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var r = await _db.Roles.FindAsync(id).ConfigureAwait(false);
+        if (r == null)
+            return NotFound($"Role not found with id {id}");
+
+        _db.Roles.Remove(r);
+        await _db.SaveChangesAsync().ConfigureAwait(false);
+
+        return Created(r, "Role deleted.");
+    }
+
+    //GET Menus for a Role
+    [HttpGet("{roleId}/menus")]
+    public async Task<IActionResult> GetMenus(int roleId)
+    {
+        var menus = await _db.RoleMenus
+            .Where(rm => rm.RoleId == roleId)
+            .Select(rm => new MenuDto(default, default, null, null, default, default) { MenuId = rm.MenuId, Name = rm.MenuMaster.Name })
+            .ToListAsync().ConfigureAwait(false);
+
+        return Ok(menus);
+    }
+
+    //Assign Menus to a Role
+    [HttpPost("{roleId}/menus")]
+    public async Task<IActionResult> AssignMenus(int roleId, AssignMenusDto dto)
+    {
+        var exists = await _db.Roles.AnyAsync(r => r.Id == roleId).ConfigureAwait(false);
+        if (!exists)
+            return NotFound($"Role not found with id {roleId}");
+
+        // Remove old assignments
+        var old = _db.RoleMenus.Where(rm => rm.RoleId == roleId);
+        _db.RoleMenus.RemoveRange(old);
+
+        // Add new ones
+        foreach (var menuId in dto.MenuIds)
+        {
+            _db.RoleMenus.Add(new RoleMenu
+            {
+                RoleId = roleId,
+                MenuId = menuId
+            });
+        }
+
+        await _db.SaveChangesAsync().ConfigureAwait(false);
+
+        return Ok("Menus assigned successfully");
+    }
+}

@@ -35,7 +35,7 @@ public sealed class MobileVerificationService : BaseService, IMobileVerification
 
     public async Task<ApiResponse<string>> SendOtpAsync(int userId)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
+        var user = await _userRepository.GetByIdAsync(userId).ConfigureAwait(false);
 
         if (user == null)
             return new ApiResponse<string>(HttpStatusCode.NotFound, "User not found.");
@@ -58,17 +58,17 @@ public sealed class MobileVerificationService : BaseService, IMobileVerification
         };
 
         _db.MobileVerificationTokens.Add(record);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         //await _smsSender.SendSmsAsync(user.Mobile, $"Your OTP is {token}, valid till {expiryMinutes} minutes only.");
-        await _smsSender.SendSmsAsync(user.FullName, user.Email, token, expiryMinutes);
+        await _smsSender.SendSmsAsync(user.FullName, user.Email, token, expiryMinutes).ConfigureAwait(false);
 
         return new ApiResponse<string>(HttpStatusCode.OK, "OTP sent successfully.");
     }
 
     public async Task<ApiResponse<string>> VerifyOtpAsync(int userId, string otp)
     {
-        var user = await _userRepository.GetByIdAsync(userId);
+        var user = await _userRepository.GetByIdAsync(userId).ConfigureAwait(false);
 
         if (user == null)
             return new ApiResponse<string>(HttpStatusCode.NotFound, "User not found.");
@@ -76,7 +76,7 @@ public sealed class MobileVerificationService : BaseService, IMobileVerification
         var record = await _db.MobileVerificationTokens
            .Where(x => x.MobileNumber == user.Mobile && x.Token == otp && !x.IsUsed)
            .OrderByDescending(x => x.Id)
-           .FirstOrDefaultAsync();
+           .FirstOrDefaultAsync().ConfigureAwait(false);
 
         if (record == null)
             return new ApiResponse<string>(HttpStatusCode.BadRequest, "Invalid or already used token.");
@@ -85,11 +85,11 @@ public sealed class MobileVerificationService : BaseService, IMobileVerification
             return new ApiResponse<string>(HttpStatusCode.BadRequest, "OTP expired.");
 
         record.IsUsed = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         // Mark user verified
         user.MobileVerified = true;
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync().ConfigureAwait(false);
 
         return new ApiResponse<string>(HttpStatusCode.OK, "Mobile number verified successfully!");
     }
