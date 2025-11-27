@@ -1,7 +1,6 @@
 // hooks/useAdminMenu.ts
 "use client";
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
 
 export function useAdminMenu() {
   const [menu, setMenu] = useState<any[]>([]);
@@ -11,9 +10,42 @@ export function useAdminMenu() {
   useEffect(() => {
     async function fetchMenu() {
       try {
-        const data = await api.getMenu();
-        // Sort modules & children by order
-        const sorted = data
+        // ----------- DUMMY MENU DATA -----------
+        const dummyMenu = [
+          {
+            id: 1,
+            name: "App Management",
+            icon: "Home",
+            order: 1,
+            children: [
+              { id: 11, name: "Add Module", path: "/admin/dashboard/app-management/add-module", order: 1 },
+              { id: 12, name: "Add Activiy", path: "/admin/dashboard/app-management/add-activity", order: 2 },
+            ],
+          },
+          {
+            id: 2,
+            name: "User Management",
+            order: 2,
+            children: [
+              { id: 21, name: "Approve Users", path: "/admin/dashboard/user-management/approve-user", order: 1 },
+              { id: 22, name: "All Users", path: "#", order: 2 },
+              { id: 23, name: "All Roles", path: "#", order: 3 },
+            ],
+          },
+          {
+            id: 3,
+            name: "Settings",
+            icon: "Settings",
+            order: 3,
+            children: [
+              { id: 31, name: "General", path: "#", order: 1 },
+              { id: 32, name: "Security", path: "#", order: 2 },
+            ],
+          },
+        ];
+
+        // Sort modules & children by "order"
+        const sorted = dummyMenu
           .sort((a: any, b: any) => a.order - b.order)
           .map((mod: any) => ({
             ...mod,
@@ -23,7 +55,7 @@ export function useAdminMenu() {
         setMenu(sorted);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || "Failed to fetch menu");
+        setError(err.message || "Failed to fetch dummy menu");
       } finally {
         setLoading(false);
       }

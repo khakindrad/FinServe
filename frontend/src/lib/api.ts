@@ -39,9 +39,14 @@ async function request(path: string, options: RequestInit = {}) {
   let result=await res.json();
 
   if (result.statusCode !==200) {
+    
+      if(result.statusCode===403 && 
+        ( result.data.emailVerified 
+          || result.data.mobileVerified 
+        ))return result;
     errMsg = result.message ?? "Something went wrong.";
     throw new Error(errMsg);
-  }
+    }
   return result;
 }
 // -----------------------------
@@ -85,6 +90,16 @@ export const api = {
       body: JSON.stringify(data),
     }),
 
+    emailVerification: (data: any) =>
+      request("/Auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+    }),
+    mobileVerification: (data: any) =>
+      request("/Auth/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+    }),
   /*
          ------------------------------User-----------------------------------------
   */

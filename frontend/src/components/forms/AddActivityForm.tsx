@@ -72,7 +72,6 @@ export default function ActivityForm() {
       setActivityOrder(lastOrderData.lastOrder + 10);
     } catch (err) {
       console.error("Error adding activity:", err);
-      alert("Error adding activity");
     }
   };
 

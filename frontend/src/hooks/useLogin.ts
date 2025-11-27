@@ -7,7 +7,11 @@ import { setAccessToken } from "@/lib/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
-export function useLogin(setErrorMsg: (m: string) => void, setSuccessMsg: (m: string) => void) {
+export function useLogin(
+  setErrorMsg: (m: string) => void,
+  setSuccessMsg: (m: string) => void,
+  setAlertMsg: (m: string) => void
+) {
   const { setUser } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -15,27 +19,51 @@ export function useLogin(setErrorMsg: (m: string) => void, setSuccessMsg: (m: st
   async function login(email: string, password: string) {
     setLoading(true);
     setErrorMsg("");
+
     try {
-      const res = await api.login({ email, password });
-      if(res.statusCode===200)
-      {
-        if (res?.accessToken) {
-          setAccessToken(res.data.accessToken);
-        }
-        if (res?.data.user) {
-          setUser(res.data.user);
-        } 
-        if(res?.message)
-        {
-          setSuccessMsg(res.message);
-        }
-        return res.data.user.roles;
+      const response = await api.login({ email, password });
+
+      const { statusCode, data, message } = response;
+
+      if (statusCode === 200) {
+        if (data?.accessToken) setAccessToken(data.accessToken);
+        if (data?.user) setUser(data.user);
+
+        if (message) setSuccessMsg(message);
+
+        return data.user.roles;
       }
+
+      if (statusCode === 403) {
+        const { id, emailVerified, mobileVerified } = data;
+
+        if (!emailVerified) {
+          const verifyEmail = await api.emailVerification({ id });
+          setAlertMsg(
+            verifyEmail.statusCode === 200
+              ? `${message}, email verification sent`
+              : `${message}, please contact administrator`
+          );
+        }
+
+        if (!mobileVerified) {
+          const verifyMobile = await api.mobileVerification({ id });
+          setAlertMsg(
+            verifyMobile.statusCode === 200
+              ? `${message}, OTP sent to mobile`
+              : `${message}, please contact administrator`
+          );
+        }
+      }
+
     } catch (err: any) {
-      setErrorMsg(err?.message || "Something went wrong, Please Try again later.");
+      const msg = err?.response?.data?.message || err?.message || "Something went wrong. Try again later.";
+      setErrorMsg(msg);
     } finally {
       setLoading(false);
     }
   }
+
   return { login, loading };
 }
+

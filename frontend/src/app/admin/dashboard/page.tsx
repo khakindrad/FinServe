@@ -1,13 +1,9 @@
 "use client";
 
-import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { BarChart3, Users, Truck, Store } from "lucide-react";
-import AdminLayout from "@/components/dashboards/AdminDashboardLayout";
 export default function AdminDashboard() {
   return (
-    <ProtectedRoute>
-      <AdminLayout>
         <div className="space-y-6">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <p className="text-gray-600">
@@ -50,7 +46,5 @@ export default function AdminDashboard() {
             </Card>
           </div>
         </div>
-      </AdminLayout>
-    </ProtectedRoute>
   );
 }

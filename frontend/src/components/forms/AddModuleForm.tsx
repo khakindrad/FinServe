@@ -63,7 +63,6 @@ export default function ModuleForm() {
       setModuleOrder(orderData.lastOrder + 10);
     } catch (err) {
       console.error("Error adding module:", err);
-      alert("Error adding module");
     }
   };
 

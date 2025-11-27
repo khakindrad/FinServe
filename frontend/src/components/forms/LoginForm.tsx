@@ -16,8 +16,8 @@ import { useRouter } from "next/navigation";
 export default function LoginForm() {
 
   const router = useRouter();
-  const { errorMsg, setErrorMsg, successMsg, setSuccessMsg } = useFormMessages();
-  const { login, loading } = useLogin(setErrorMsg, setSuccessMsg);
+  const { errorMsg, setErrorMsg, successMsg, setSuccessMsg,alertMsg,setAlertMsg } = useFormMessages();
+  const { login, loading } = useLogin(setErrorMsg, setSuccessMsg,setAlertMsg);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -66,7 +66,7 @@ export default function LoginForm() {
     <form onSubmit={handleSubmit} className="space-y-6">
       {errorMsg && <AppAlert type="error" message={errorMsg} />}
       {successMsg && <AppAlert type="success" message={successMsg} />}
-
+      {alertMsg && <AppAlert type="info" message={alertMsg} />}
       {/* EMAIL */}
       <div className="space-y-2">
         <label className="text-sm font-medium">Email</label>
