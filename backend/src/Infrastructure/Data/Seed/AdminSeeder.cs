@@ -21,6 +21,8 @@ public static class AdminSeeder
                 Name = "Admin",
                 Description = "Platform administrator",
                 IsActive = true,
+                CreatedTime = DateTime.Now,
+                CreatedBy = "Admin"
             };
 
             context.Roles.Add(adminRole);
@@ -54,7 +56,9 @@ public static class AdminSeeder
                 MobileVerified = true,
                 // Hash Password
                 PasswordHash = string.Empty,
-                PasswordLastChanged = DateTime.UtcNow
+                PasswordLastChanged = DateTime.UtcNow,
+                CreatedTime = DateTime.Now,
+                CreatedBy = "Admin"
             };
 
             adminUser.PasswordHash = hasher.HashPassword(adminUser, "Admin@FinServe123!");
@@ -72,7 +76,9 @@ public static class AdminSeeder
             context.UserRoles.Add(new UserRole
             {
                 UserId = adminUser.Id,
-                RoleId = adminRole.Id
+                RoleId = adminRole.Id,
+                CreatedTime = DateTime.Now,
+                CreatedBy = "Admin"
             });
 
             await context.SaveChangesAsync().ConfigureAwait(false);
@@ -91,7 +97,9 @@ public static class AdminSeeder
                 context.RoleMenus.Add(new RoleMenu
                 {
                     RoleId = adminRole.Id,
-                    MenuId = menuId
+                    MenuId = menuId,
+                    CreatedTime = DateTime.Now,
+                    CreatedBy = "Admin"
                 });
             }
         }

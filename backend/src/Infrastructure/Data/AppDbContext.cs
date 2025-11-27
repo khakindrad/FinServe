@@ -1,12 +1,22 @@
 using Core.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Data;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) 
-        : base(options) 
+    private readonly string? _currentUser;
+    // Runtime constructor (with IHttpContextAccessor)
+    public AppDbContext(DbContextOptions<AppDbContext> options, IHttpContextAccessor accessor)
+        : base(options)
+    {
+        _currentUser = accessor.HttpContext?.User?.Identity?.Name;
+    }
+
+    // Design-time constructor (for migrations)
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
     {
     }
     public DbSet<User> Users { get; set; } = null!;
@@ -173,17 +183,26 @@ public class AppDbContext : DbContext
     .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<MenuMaster>().HasData(
-            new MenuMaster { Id = 1, Name = "Dashboard", Route = "/dashboard", ParentId = null, Sequence = 1 },
-            new MenuMaster { Id = 2, Name = "Masters", Route = "#", ParentId = null, Sequence = 2 },
-            new MenuMaster { Id = 3, Name = "Users", Route = "#", ParentId = null, Sequence = 3 }
+            new MenuMaster { Id = 1, Name = "Profile", Route = "#", ParentId = null, Sequence = 1,CreatedBy = "Admin" },
+            new MenuMaster { Id = 2, Name = "Masters", Route = "#", ParentId = null, Sequence = 2,CreatedBy = "Admin" },
+            new MenuMaster { Id = 3, Name = "Users", Route = "#", ParentId = null, Sequence = 3, CreatedBy = "Admin" }
         );
 
         modelBuilder.Entity<MenuMaster>().HasData(
-            new MenuMaster { Id = 4, Name = "Countries", Route = "/country", ParentId = 2, Sequence = 1 },
-            new MenuMaster { Id = 5, Name = "States", Route = "/state", ParentId = 2, Sequence = 2 },
-            new MenuMaster { Id = 6, Name = "Cities", Route = "/city", ParentId = 2, Sequence = 3 },
-            new MenuMaster { Id = 7, Name = "Roles", Route = "/roles", ParentId = 3, Sequence = 1 },
-            new MenuMaster { Id = 8, Name = "Menus", Route = "/menus", ParentId = 3, Sequence = 2 }
+            //Profile Menus
+            new MenuMaster { Id = 9, Name = "View Profile", Route = "/admin/dashboard/masters/menus", ParentId = 1, Sequence = 1, CreatedBy = "Admin" },
+            new MenuMaster { Id = 10, Name = "Change Password", Route = "/admin/dashboard/masters/menus", ParentId = 1, Sequence = 2, CreatedBy = "Admin" },
+            //Master Menus
+            new MenuMaster { Id = 4, Name = "Countries", Route = "/admin/masters/countries", ParentId = 2, Sequence = 1, CreatedBy = "Admin" },
+            new MenuMaster { Id = 5, Name = "States", Route = "/admin/masters/states", ParentId = 2, Sequence = 2, CreatedBy = "Admin" },
+            new MenuMaster { Id = 6, Name = "Cities", Route = "/admin/masters/cities", ParentId = 2, Sequence = 3, CreatedBy = "Admin" },
+            new MenuMaster { Id = 7, Name = "Roles", Route = "/admin/masters/roles", ParentId = 2, Sequence = 4, CreatedBy = "Admin" },
+            new MenuMaster { Id = 8, Name = "Menus", Route = "/admin/masters/menus", ParentId = 2, Sequence = 5, CreatedBy = "Admin" },            
+            //Users Menu
+            new MenuMaster { Id = 11, Name = "Users", Route = "/admin/user-management/all-users", ParentId = 3, Sequence = 1, CreatedBy = "Admin" },
+            new MenuMaster { Id = 12, Name = "Approve Users", Route = "/admin/user-management/approve-user", ParentId = 3, Sequence = 2, CreatedBy = "Admin" },
+            new MenuMaster { Id = 13, Name = "Unlock Users", Route = "/admin/user-management/unlock-user", ParentId = 3, Sequence = 3, CreatedBy = "Admin" },
+            new MenuMaster { Id = 14, Name = "Assign Roles", Route = "/admin/user-management/assign-roles", ParentId = 3, Sequence = 4, CreatedBy = "Admin" }
         );
     }
 
@@ -197,10 +216,16 @@ public class AppDbContext : DbContext
             {
                 entry.Entity.CreatedTime = DateTime.UtcNow;
                 entry.Entity.LastUpdatedTime = DateTime.UtcNow;
+                entry.Entity.CreatedBy = _currentUser;
             }
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.LastUpdatedTime = DateTime.UtcNow;
+                entry.Entity.LastUpdatedBy = _currentUser;
+
+                // Prevent overwriting Create fields
+                entry.Property(x => x.CreatedTime).IsModified = false;
+                entry.Property(x => x.CreatedBy).IsModified = false;
             }
         }
 

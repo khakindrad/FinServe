@@ -42,7 +42,7 @@ public sealed class MenusController : BaseController
     [HttpPost]
     public async Task<IActionResult> Post(CreateMenuDto dto)
     {
-        var m = new MenuMaster { Name = dto.Mame, ParentId = dto.ParentMenuId, Route = dto.Route, Icon = dto.Icon, Sequence = dto.Order };
+        var m = new MenuMaster { Name = dto.Name, ParentId = dto.ParentMenuId, Route = dto.Route, Icon = dto.Icon, Sequence = dto.Order };
         _db.MenuMaster.Add(m);
         await _db.SaveChangesAsync().ConfigureAwait(false);
 
@@ -57,7 +57,7 @@ public sealed class MenusController : BaseController
         if (m == null)
             return NotFound($"Role not found with id {id}");
 
-        m.Name = dto.Mame;
+        m.Name = dto.Name;
         m.ParentId = dto.ParentMenuId;
         m.Route = dto.Route;
         m.Icon = dto.Icon;

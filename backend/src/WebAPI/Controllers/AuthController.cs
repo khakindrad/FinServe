@@ -97,6 +97,7 @@ public sealed class AuthController : BaseController
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim("UserId", user.Id.ToString()),
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Name, user.FullName), 
             //new Claim(ClaimTypes.Role, user.UserRoles?.Name ?? "Customer") 

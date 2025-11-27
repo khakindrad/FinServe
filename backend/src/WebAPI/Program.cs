@@ -62,6 +62,7 @@ internal sealed class Program
             builder.Services.AddDbContext<AppDbContext>(opt => opt.UseMySql(conn, ServerVersion.AutoDetect(conn)));
 
             builder.Services.AddMemoryCache();
+            builder.Services.AddHttpContextAccessor();
 
             builder.Services.AddSingleton<IHostLifetime, CustomConsoleLiftime>();
             builder.Services.AddScoped<IUserRepository, UserRepository>();
