@@ -90,12 +90,14 @@ internal sealed class Program
             {
                 options.AddPolicy("AppCorsPolicy", policy =>
                 {
-                    policy.WithOrigins(allowedOrigins)   // Use origins from appsettings.json
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
+                    policy.SetIsOriginAllowed(origin =>
+                        allowedOrigins.Contains(origin)
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
 
                     if (allowCredentials)
-                        policy.AllowCredentials();        // Only enable if needed
+                        policy.AllowCredentials();
                 });
             });
 
