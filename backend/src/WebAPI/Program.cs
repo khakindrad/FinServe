@@ -178,7 +178,7 @@ internal sealed class Program
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                await AdminSeeder.SeedAsync(db).ConfigureAwait(false);
+                await AdminSeeder.SeedAsync(db).ConfigureAwait(true);
             }
 
             //if (app.Environment.IsDevelopment())

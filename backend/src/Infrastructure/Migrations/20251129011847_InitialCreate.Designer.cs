@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251127195604_InitialCreate")]
+    [Migration("20251129011847_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -63,8 +63,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4765),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Mumbai",
                             StateId = 1
@@ -72,8 +71,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4767),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Pune",
                             StateId = 1
@@ -81,8 +79,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4768),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Ahmedabad",
                             StateId = 2
@@ -90,8 +87,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4769),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "San Francisco",
                             StateId = 3
@@ -141,8 +137,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(3593),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsoCode = "IN",
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             MobileCode = "+91",
@@ -151,8 +146,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(3604),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsoCode = "US",
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             MobileCode = "+1",
@@ -344,7 +338,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8617),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Profile",
@@ -355,7 +349,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 2,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8633),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Masters",
@@ -366,7 +360,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 3,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8635),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Users",
@@ -377,7 +371,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 9,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8864),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "View Profile",
@@ -389,7 +383,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 10,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8866),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Change Password",
@@ -401,7 +395,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 4,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8877),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Countries",
@@ -413,7 +407,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 5,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8879),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "States",
@@ -425,7 +419,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 6,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8880),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Cities",
@@ -437,7 +431,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 7,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8882),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Roles",
@@ -449,7 +443,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 8,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8883),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Menus",
@@ -461,7 +455,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 11,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8885),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Users",
@@ -473,7 +467,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 12,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8886),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Approve Users",
@@ -485,7 +479,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 13,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8888),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Unlock Users",
@@ -497,7 +491,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 14,
                             CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8889),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Assign Roles",
@@ -709,8 +703,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(2785),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Platform administrator",
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -719,8 +712,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 2,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3008),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Internal employee",
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -729,8 +721,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 3,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3010),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Car dealer",
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -739,8 +730,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 4,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3011),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "Bank representative",
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -749,8 +739,7 @@ namespace Infrastructure.Migrations
                         new
                         {
                             Id = 5,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3012),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Description = "End customer",
                             IsActive = true,
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
@@ -833,8 +822,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 1,
                             CountryId = 1,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4422),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Maharashtra"
                         },
@@ -842,8 +830,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 2,
                             CountryId = 1,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4424),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "Gujarat"
                         },
@@ -851,8 +838,7 @@ namespace Infrastructure.Migrations
                         {
                             Id = 3,
                             CountryId = 2,
-                            CreatedBy = "Admin",
-                            CreatedTime = new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4425),
+                            CreatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             LastUpdatedTime = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Name = "California"
                         });

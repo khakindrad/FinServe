@@ -506,8 +506,8 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedBy", "CreatedTime", "IsoCode", "LastUpdatedBy", "LastUpdatedTime", "MobileCode", "Name" },
                 values: new object[,]
                 {
-                    { 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(3593), "IN", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "+91", "India" },
-                    { 2, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(3604), "US", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "+1", "United States" }
+                    { 1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "IN", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "+91", "India" },
+                    { 2, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "US", null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "+1", "United States" }
                 });
 
             migrationBuilder.InsertData(
@@ -515,9 +515,9 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedBy", "CreatedTime", "Icon", "IsActive", "LastUpdatedBy", "LastUpdatedTime", "Name", "ParentId", "Route", "Sequence" },
                 values: new object[,]
                 {
-                    { 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8617), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Profile", null, "#", 1 },
-                    { 2, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8633), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Masters", null, "#", 2 },
-                    { 3, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8635), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Users", null, "#", 3 }
+                    { 1, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Profile", null, "#", 1 },
+                    { 2, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Masters", null, "#", 2 },
+                    { 3, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Users", null, "#", 3 }
                 });
 
             migrationBuilder.InsertData(
@@ -525,11 +525,11 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedBy", "CreatedTime", "Description", "IsActive", "LastUpdatedBy", "LastUpdatedTime", "Name" },
                 values: new object[,]
                 {
-                    { 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(2785), "Platform administrator", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Admin" },
-                    { 2, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3008), "Internal employee", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Employee" },
-                    { 3, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3010), "Car dealer", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Dealer" },
-                    { 4, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3011), "Bank representative", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Banker" },
-                    { 5, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 329, DateTimeKind.Local).AddTicks(3012), "End customer", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Customer" }
+                    { 1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Platform administrator", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Admin" },
+                    { 2, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Internal employee", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Employee" },
+                    { 3, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Car dealer", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Dealer" },
+                    { 4, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Bank representative", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Banker" },
+                    { 5, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "End customer", true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Customer" }
                 });
 
             migrationBuilder.InsertData(
@@ -537,17 +537,17 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedBy", "CreatedTime", "Icon", "IsActive", "LastUpdatedBy", "LastUpdatedTime", "Name", "ParentId", "Route", "Sequence" },
                 values: new object[,]
                 {
-                    { 4, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8877), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Countries", 2, "/admin/masters/countries", 1 },
-                    { 5, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8879), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "States", 2, "/admin/masters/states", 2 },
-                    { 6, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8880), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Cities", 2, "/admin/masters/cities", 3 },
-                    { 7, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8882), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Roles", 2, "/admin/masters/roles", 4 },
-                    { 8, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8883), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Menus", 2, "/admin/masters/menus", 5 },
-                    { 9, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8864), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "View Profile", 1, "/admin/dashboard/masters/menus", 1 },
-                    { 10, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8866), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Change Password", 1, "/admin/dashboard/masters/menus", 2 },
-                    { 11, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8885), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Users", 3, "/admin/user-management/all-users", 1 },
-                    { 12, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8886), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Approve Users", 3, "/admin/user-management/approve-user", 2 },
-                    { 13, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8888), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Unlock Users", 3, "/admin/user-management/unlock-user", 3 },
-                    { 14, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 338, DateTimeKind.Local).AddTicks(8889), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Assign Roles", 3, "/admin/user-management/assign-roles", 4 }
+                    { 4, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Countries", 2, "/admin/masters/countries", 1 },
+                    { 5, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "States", 2, "/admin/masters/states", 2 },
+                    { 6, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Cities", 2, "/admin/masters/cities", 3 },
+                    { 7, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Roles", 2, "/admin/masters/roles", 4 },
+                    { 8, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Menus", 2, "/admin/masters/menus", 5 },
+                    { 9, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "View Profile", 1, "/admin/dashboard/masters/menus", 1 },
+                    { 10, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Change Password", 1, "/admin/dashboard/masters/menus", 2 },
+                    { 11, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Users", 3, "/admin/user-management/all-users", 1 },
+                    { 12, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Approve Users", 3, "/admin/user-management/approve-user", 2 },
+                    { 13, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Unlock Users", 3, "/admin/user-management/unlock-user", 3 },
+                    { 14, "Admin", new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, true, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Assign Roles", 3, "/admin/user-management/assign-roles", 4 }
                 });
 
             migrationBuilder.InsertData(
@@ -555,9 +555,9 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CountryId", "CreatedBy", "CreatedTime", "LastUpdatedBy", "LastUpdatedTime", "Name" },
                 values: new object[,]
                 {
-                    { 1, 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4422), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Maharashtra" },
-                    { 2, 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4424), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Gujarat" },
-                    { 3, 2, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4425), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "California" }
+                    { 1, 1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Maharashtra" },
+                    { 2, 1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Gujarat" },
+                    { 3, 2, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "California" }
                 });
 
             migrationBuilder.InsertData(
@@ -565,10 +565,10 @@ namespace Infrastructure.Migrations
                 columns: new[] { "Id", "CreatedBy", "CreatedTime", "LastUpdatedBy", "LastUpdatedTime", "Name", "StateId" },
                 values: new object[,]
                 {
-                    { 1, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4765), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Mumbai", 1 },
-                    { 2, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4767), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Pune", 1 },
-                    { 3, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4768), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Ahmedabad", 2 },
-                    { 4, "Admin", new DateTime(2025, 11, 28, 1, 26, 4, 334, DateTimeKind.Local).AddTicks(4769), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "San Francisco", 3 }
+                    { 1, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Mumbai", 1 },
+                    { 2, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Pune", 1 },
+                    { 3, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "Ahmedabad", 2 },
+                    { 4, null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), null, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), "San Francisco", 3 }
                 });
 
             migrationBuilder.CreateIndex(
