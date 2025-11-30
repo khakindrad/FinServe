@@ -10,8 +10,10 @@ import { useFormMessages } from "@/hooks/useFormMessages";
 import { useForgotPassword } from "@/hooks/useForgotPassword";
 import { validateField } from "@/lib/validators";
 import { patterns } from "@/lib/patterns";
+import {useRouter} from "next/navigation";
 
 export default function ForgotPasswordForm() {
+  const router = useRouter();
   const { errorMsg, successMsg, setErrorMsg, setSuccessMsg } =
     useFormMessages();
   const { sendResetLink, loading } = useForgotPassword(
@@ -35,9 +37,9 @@ export default function ForgotPasswordForm() {
       setErrorMsg(emailErr); // Global message when single field error
       return;
     }
-
     // Call API
     sendResetLink(email);
+
   }
 
   return (

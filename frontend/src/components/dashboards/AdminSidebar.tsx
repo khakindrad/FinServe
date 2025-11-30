@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/context/AuthContext";
+import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -24,16 +24,14 @@ const ICONS: Record<string, any> = {
 };
 
 export default function AdminSidebar() {
-  const { user, logout } = useAuth();
-  const { menu, loading } = useAdminMenu();
-
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const menu = user?.menus || [];
   const initials = user?.fullName
     ?.split(" ")
     .map((w: string) => w[0])
     .join("")
     .toUpperCase();
-
-  if (loading) return <p className="p-6">Loading menu...</p>;
 
   return (
     <div className="p-6 flex flex-col h-full justify-between">
@@ -63,7 +61,7 @@ export default function AdminSidebar() {
 
                 <div className="space-y-1 ml-4">
                   {group.children.map((item: any, i: number) => {
-                    const href = item.path || "/"; // fallback to home
+                    const href = item.route || "/"; // fallback to home
 
                     return (
                       <Link key={i} href={href}>

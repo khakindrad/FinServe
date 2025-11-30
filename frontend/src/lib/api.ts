@@ -37,7 +37,7 @@ async function request(path: string, options: RequestInit = {}) {
   let res = await rawRequest(path, options);
   let result = await res.json();
 
-  if (result.statusCode !== 200) {
+  if (result.statusCode !== 200 && result.statusCode !== 201) {
 
     if (path === "/Auth/login") {
       if (result.statusCode === 403 &&
@@ -138,32 +138,53 @@ export const api = {
     }),
   getPendingUsers: () =>
     request("/admin/pending-users", {
-      method: "POST",
+      method: "GET",
     }),
   /*
-       ------------------------------API for Registration-----------------------------------------
+       ------------------------------Masters-----------------------------------------
 */
   GetCountry: () =>
-    request("/location/countries", {
+    request("/Countries", {
       method: "GET",
     }),
 
   // Get states by countryId
   GetState: (countryId: string | number) =>
-    request(`/location/states/${countryId}`, {
+    request(`/States/${countryId}`, {
       method: "GET",
     }),
-
+  GetAllState: () =>
+    request(`/States`, {
+      method: "GET",
+    }),
   // Get cities by stateId
   GetCity: (stateId: string | number) =>
-    request(`/location/cities/${stateId}`, {
+    request(`/Cities/${stateId}`, {
       method: "GET",
     }),
-
+  GetAllCity: () =>
+    request(`/Cities`, {
+      method: "GET",
+    }),
   //Get Genders for registration
   GetGender: () =>
     request("/Master/genders", {
       method: "GET",
+    }),
+  addCountrys: (data: any) =>
+    request("/Countries", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  addStates: (data: any) =>
+    request("/States", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  addCity: (data: any) =>
+    request("/Cities", {
+      method: "POST",
+      body: JSON.stringify(data),
     }),
 };
 
