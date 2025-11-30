@@ -40,7 +40,7 @@ public sealed class CitiesController : BaseController
         return Ok(new CityDto(s.Id, s.Name, s.StateId));
     }
 
-    [HttpGet("~/api/states/{stateId}/cities")]
+    [HttpGet("get-by-state/{stateId}")]
     public async Task<IActionResult> GetByState(int stateId)
     {
         var cities = await _db.Cities
@@ -54,6 +54,13 @@ public sealed class CitiesController : BaseController
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Post(CreateCityDto dto)
     {
+        var exists = await _db.Cities.FirstOrDefaultAsync(x => x.StateId == dto.StateId && x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"City with name {exists.Name} and state {exists.State} already exists.");
+        }
+
         var city = new City { Name = dto.Name, StateId = dto.StateId };
         _db.Cities.Add(city);
 
@@ -62,16 +69,24 @@ public sealed class CitiesController : BaseController
         return Created(city, "City created.");
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Put(int id, UpdateCityDto dto)
     {
         var city = await _db.Cities.FindAsync(id).ConfigureAwait(false);
+
         if (city == null)
             return NotFound($"City not found with id {id}");
 
-        city.Name = dto.Name;
-        city.StateId = dto.StateId;
+        var exists = await _db.Cities.FirstOrDefaultAsync(x => x.StateId == dto.StateId && x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"City with name {exists.Name} and state {exists.State} already exists.");
+        }
+
+        if (dto.Name is not null) city.Name = dto.Name;
+        if (dto.StateId is not null) city.StateId = dto.StateId.Value;
 
         await _db.SaveChangesAsync().ConfigureAwait(false);
 
@@ -83,6 +98,7 @@ public sealed class CitiesController : BaseController
     public async Task<IActionResult> Delete(int id)
     {
         var city = await _db.Cities.FindAsync(id).ConfigureAwait(false);
+
         if (city == null)
             return NotFound($"City not found with id {id}");
 

@@ -41,7 +41,7 @@ public sealed class StatesController : BaseController
         return Ok(new StateDto(s.Id, s.Name, s.CountryId));
     }
 
-    [HttpGet("~/api/countries/{countryId}/states")]
+    [HttpGet("get-by-country/{countryId}")]
     public async Task<IActionResult> GetByCountry(int countryId)
     {
         var states = await _db.States
@@ -56,6 +56,13 @@ public sealed class StatesController : BaseController
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Post(CreateStateDto dto)
     {
+        var exists = await _db.States.FirstOrDefaultAsync(x => x.CountryId == dto.CountryId && x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"State with name {exists.Name} and country {exists.Country} already exists.");
+        }
+
         var state = new State { Name = dto.Name, CountryId = dto.CountryId };
         _db.States.Add(state);
 
@@ -64,16 +71,24 @@ public sealed class StatesController : BaseController
         return Created(state, "State created.");
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Put(int id, UpdateStateDto dto)
     {
         var state = await _db.States.FindAsync(id).ConfigureAwait(false);
+
         if (state == null)
             return NotFound($"State not found with id {id}");
 
-        state.Name = dto.Name;
-        state.CountryId = dto.CountryId;
+        var exists = await _db.States.FirstOrDefaultAsync(x => x.CountryId == dto.CountryId && x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"State with name {exists.Name} and country {exists.Country} already exists.");
+        }
+
+        if (dto.Name is not null) state.Name = dto.Name;
+        if (dto.CountryId is not null) state.CountryId = dto.CountryId.Value;
 
         await _db.SaveChangesAsync().ConfigureAwait(false);
 
@@ -85,6 +100,7 @@ public sealed class StatesController : BaseController
     public async Task<IActionResult> Delete(int id)
     {
         var state = await _db.States.FindAsync(id).ConfigureAwait(false);
+
         if (state == null)
             return NotFound($"State not found with id {id}");
 

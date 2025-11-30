@@ -45,6 +45,13 @@ public sealed class RolesController : BaseController
     [HttpPost]
     public async Task<IActionResult> Post(CreateRoleDto dto)
     {
+        var exists = await _db.Roles.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Role with name {exists.Name} already exists.");
+        }
+
         var r = new Role { Name = dto.Name, Description = dto.Description, IsActive = dto.IsActive };
         _db.Roles.Add(r);
 
@@ -53,16 +60,25 @@ public sealed class RolesController : BaseController
         return Created(r, "Role created.");
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     public async Task<IActionResult> Put(int id, UpdateRoleDto dto)
     {
         var r = await _db.Roles.FindAsync(id).ConfigureAwait(false);
+
         if (r == null)
             return NotFound($"Role not found with id {id}");
 
-        r.Name = dto.Name;
-        r.Description = dto.Description;
-        r.IsActive = dto.IsActive;
+        var exists = await _db.Roles.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Role with name {exists.Name} already exists.");
+        }
+
+        if (dto.Name is not null) r.Name = dto.Name;
+        if (dto.Description is not null) r.Description = dto.Description;
+        if (dto.IsActive is not null) r.IsActive = dto.IsActive.Value;
+
         await _db.SaveChangesAsync().ConfigureAwait(false);
 
         return Created(r, "Role updated.");
@@ -82,24 +98,32 @@ public sealed class RolesController : BaseController
     }
 
     //GET Menus for a Role
-    [HttpGet("{roleId}/menus")]
+    [HttpGet("menus/{roleId}")]
     public async Task<IActionResult> GetMenus(int roleId)
     {
         var menus = await _db.RoleMenus
             .Where(rm => rm.RoleId == roleId)
-            .Select(rm => new MenuDto(default, default, null, null, default, default) { MenuId = rm.MenuId, Name = rm.MenuMaster.Name })
+            .Select(rm => new MenuDto(rm.MenuId, rm.MenuMaster.Name, rm.MenuMaster.Route, rm.MenuMaster.Icon, rm.MenuMaster.Sequence))
             .ToListAsync().ConfigureAwait(false);
 
         return Ok(menus);
     }
 
     //Assign Menus to a Role
-    [HttpPost("{roleId}/menus")]
+    [HttpPost("menus/{roleId}")]
     public async Task<IActionResult> AssignMenus(int roleId, AssignMenusDto dto)
     {
-        var exists = await _db.Roles.AnyAsync(r => r.Id == roleId).ConfigureAwait(false);
-        if (!exists)
+        var role = await _db.Roles.FirstOrDefaultAsync(r => r.Id == roleId).ConfigureAwait(false);
+
+        if (role is null)
             return NotFound($"Role not found with id {roleId}");
+
+        var menuExists = role.RoleMenus.FirstOrDefault(x => dto.MenuIds.Contains(x.MenuId));
+
+        if (menuExists is not null)
+        {
+            return BadRequest($"Role {role.Name} with menu {menuExists.MenuMaster.Name} already exists.");
+        }
 
         // Remove old assignments
         var old = _db.RoleMenus.Where(rm => rm.RoleId == roleId);

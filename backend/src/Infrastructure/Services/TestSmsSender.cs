@@ -22,7 +22,7 @@ public sealed class TestSmsSender : BaseService, ISmsSender
         <p style='padding:10px 20px; background:#4f46e5; color:white; text-decoration:none; border-radius:6px;'>
               {otp}
         </p>
-        <p>This otp will expire in {expiryMinutes} Minutes.</p>;
+        <p>This otp will expire in {expiryMinutes} Minutes.</p>
         ";
 
         await _emailSender.SendEmailAsync(mobileNo, "Verify your Mobile Number - FinServe", body).ConfigureAwait(false);

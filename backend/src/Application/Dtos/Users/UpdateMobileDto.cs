@@ -1,3 +1,3 @@
 ﻿namespace Application.Dtos.Users;
 
-public sealed record UpdateMobileDto(int UserId, string NewMobile);
+public sealed record UpdateMobileDto(string NewMobile);

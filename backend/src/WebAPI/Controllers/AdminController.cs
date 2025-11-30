@@ -137,8 +137,8 @@ public sealed class AdminController : BaseController
     /// </summary>
     /// <param name="userId">User id to unlock</param>
     /// <param name="body">Optional: { "reactivate": true } to set IsActive = true</param>
-    [HttpPut("unlock/{userId}")]
-    public async Task<IActionResult> UnlockUser(int userId, [FromBody] dynamic? body = null)
+    [HttpPatch("unlock/{userId}")]
+    public async Task<IActionResult> UnlockUser(int userId)
     {
         var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
@@ -148,12 +148,6 @@ public sealed class AdminController : BaseController
         user.LockoutEndAt = null;
         user.FailedLoginCount = 0;
 
-        if (body != null && (body.reactivate != null && (bool)body.reactivate))
-        {
-            user.IsActive = true;
-        }
-
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         // Record in LoginHistory (audit)
@@ -234,15 +228,14 @@ public sealed class AdminController : BaseController
         return Ok("Expired tokens removed.");
     }
 
-    [HttpPut("approve/{id}")]
-    public async Task<IActionResult> ApproveUser(int id)
+    [HttpPatch("approve/{userId}")]
+    public async Task<IActionResult> ApproveUser(int userId)
     {
-        var user = await _users.GetByIdAsync(id).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
         user.IsApproved = true;
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         string emailBody = $@"

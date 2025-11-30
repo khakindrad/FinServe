@@ -8,6 +8,5 @@ public interface IUserRepository
     Task<IEnumerable<User>> GetUsersAsync();
     Task<IEnumerable<User>> GetPendingApprovalsAsync();
     Task AddAsync(User user);
-    Task UpdateAsync(User user);
     Task SaveChangesAsync();
 }

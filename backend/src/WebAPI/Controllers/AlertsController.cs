@@ -38,7 +38,7 @@ public sealed class AlertsController: BaseController
     }
 
     // PUT api/alerts/markread/{id}
-    [HttpPut("markread/{id}")]
+    [HttpPost("markread/{id}")]
     public async Task<IActionResult> MarkRead(int id)
     {
         var alert = await _db.DashboardAlerts.FindAsync(id).ConfigureAwait(false);

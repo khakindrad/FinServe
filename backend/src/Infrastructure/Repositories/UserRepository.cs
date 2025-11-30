@@ -54,6 +54,5 @@ public class UserRepository : IUserRepository
         .Include(u => u.UserRoles)
         .ThenInclude(ur => ur.Role)
         .Where(u => !u.IsApproved).ToListAsync().ConfigureAwait(false);
-    public async Task UpdateAsync(User user) => _db.Users.Update(user);
     public async Task SaveChangesAsync() => await _db.SaveChangesAsync().ConfigureAwait(false);
 }

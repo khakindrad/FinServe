@@ -70,7 +70,7 @@ public sealed class AuthController : BaseController
               Verify Email
            </a>
         </p>
-        <p>This link will expire in {expiryHours} hour.</p>;
+        <p>This link will expire in {expiryHours} hour.</p>
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
@@ -293,10 +293,10 @@ public sealed class AuthController : BaseController
         return Ok("Email verified successfully!");
     }
 
-    [HttpPost("send-verification-email")]
-    public async Task<IActionResult> SendVerificationMail([FromBody] SendVerificationMailDto sendVerificationMailDto)
+    [HttpPost("send-verification-email/{userId}")]
+    public async Task<IActionResult> SendVerificationMail(int userId)
     {
-        var user = await _users.GetByIdAsync(sendVerificationMailDto.UserId).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
@@ -315,10 +315,9 @@ public sealed class AuthController : BaseController
         }
     }
 
-    [HttpPost("update-email")]
-    public async Task<IActionResult> UpdateEmail([FromBody] UpdateEmailDto updateEmailDto)
+    [HttpPatch("update-email/{userId}")]
+    public async Task<IActionResult> UpdateEmail(int userId, [FromBody] UpdateEmailDto updateEmailDto)
     {
-        int userId = updateEmailDto.UserId;
         var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
 
         if (user == null)
@@ -332,9 +331,6 @@ public sealed class AuthController : BaseController
         user.Email = updateEmailDto.NewEmail;
 
         user.EmailVerified = false;
-
-        await _users.UpdateAsync(user).ConfigureAwait(false);
-
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         var emailSendResult = await SendVerificationEmail(user).ConfigureAwait(false);
@@ -352,10 +348,9 @@ public sealed class AuthController : BaseController
         }
     }
 
-    [HttpPost("update-mobile")]
-    public async Task<IActionResult> UpdateMobile([FromBody] UpdateMobileDto updateMobileDto)
+    [HttpPatch("update-mobile/{userId}")]
+    public async Task<IActionResult> UpdateMobile(int userId,[FromBody] UpdateMobileDto updateMobileDto)
     {
-        int userId = updateMobileDto.UserId;
         var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
@@ -369,25 +364,23 @@ public sealed class AuthController : BaseController
 
         user.MobileVerified = false;
 
-        await _users.UpdateAsync(user).ConfigureAwait(false);
-
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         return Ok("Mobile Number updated successfully.");
     }
 
-    [HttpPost("send-otp")]
-    public async Task<IActionResult> SendOtp([FromBody] SendOtpDto dto)
+    [HttpPost("send-otp/{userId}")]
+    public async Task<IActionResult> SendOtp(int userId)
     {
-        var response = await _mobileVerificationService.SendOtpAsync(dto.UserId).ConfigureAwait(false);
+        var response = await _mobileVerificationService.SendOtpAsync(userId).ConfigureAwait(false);
 
         return StatusCode(response.StatusCode, response);
     }
 
-    [HttpPost("verify-otp")]
-    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpDto dto)
+    [HttpPost("verify-otp/{userId}")]
+    public async Task<IActionResult> VerifyOtp(int userId, [FromBody] VerifyOtpDto dto)
     {
-        var response = await _mobileVerificationService.VerifyOtpAsync(dto.UserId, dto.Otp).ConfigureAwait(false);
+        var response = await _mobileVerificationService.VerifyOtpAsync(userId, dto.Otp).ConfigureAwait(false);
 
         return StatusCode(response.StatusCode, response);
     }
@@ -424,13 +417,11 @@ public sealed class AuthController : BaseController
                 user.LockoutEndAt = DateTime.UtcNow.AddMinutes(_config.GetValue("Security:Lockout:LockoutMinutes", 15));
                 user.FailedLoginCount = 0;
             }
-            await _users.UpdateAsync(user).ConfigureAwait(false);
             await _users.SaveChangesAsync().ConfigureAwait(false);
             return Unauthorized("Invalid credentials.");
         }
 
         user.FailedLoginCount = 0;
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         if (user.MfaEnabled)
@@ -550,7 +541,7 @@ public sealed class AuthController : BaseController
               Reset Password
            </a>
         </p>
-        <p>This link will expire in {expiryHours} hour.</p>;
+        <p>This link will expire in {expiryHours} hour.</p>
         <p>If you didn’t create this account, you can safely ignore this email.</p>
         ";
 
@@ -586,7 +577,6 @@ public sealed class AuthController : BaseController
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
         await historyService.AddToHistoryAsync(user).ConfigureAwait(false);
 
@@ -604,11 +594,11 @@ public sealed class AuthController : BaseController
         return Ok("Password reset successful.");
     }
 
-    [HttpPost("change-password")]
+    [HttpPost("change-password/{userId}")]
     [Authorize]
-    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto changePasswordDto)
+    public async Task<IActionResult> ChangePassword(int userId, [FromBody] ChangePasswordDto changePasswordDto)
     {
-        var user = await _users.GetByIdAsync(changePasswordDto.Id).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
         if (user == null)
             return NotFound("User not found.");
 
@@ -638,7 +628,6 @@ public sealed class AuthController : BaseController
         user.PasswordLastChanged = DateTime.UtcNow;
         user.PasswordExpiryDate = DateTime.UtcNow.AddDays(_config.GetValue("Security:PasswordExpiryDays", 90));
 
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
         await historyService.AddToHistoryAsync(user).ConfigureAwait(false);
 

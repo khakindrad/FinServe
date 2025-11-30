@@ -44,6 +44,13 @@ public sealed class CountriesController : BaseController
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Post(CreateCountryDto dto)
     {
+        var exists = await _db.Countries.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Country with name {exists.Name} already exists.");
+        }
+
         var country = new Country
         {
             Name = dto.Name,
@@ -57,7 +64,7 @@ public sealed class CountriesController : BaseController
         return Created(country, "Country created.");
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Put(int id, UpdateCountryDto dto)
     {
@@ -66,9 +73,16 @@ public sealed class CountriesController : BaseController
         if (country == null)
             return NotFound($"Country not found with id {id}");
 
-        country.Name = dto.Name;
-        country.IsoCode = dto.IsoCode;
-        country.MobileCode = dto.MobileCode;
+        var exists = await _db.Countries.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Country with name {exists.Name} already exists.");
+        }
+
+        if (dto.Name is not null) country.Name = dto.Name;
+        if (dto.IsoCode is not null) country.IsoCode = dto.IsoCode;
+        if (dto.MobileCode is not null) country.MobileCode = dto.MobileCode;
 
         await _db.SaveChangesAsync().ConfigureAwait(false);
 

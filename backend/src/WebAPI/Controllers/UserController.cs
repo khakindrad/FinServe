@@ -41,7 +41,7 @@ public sealed class UserController : BaseController
     // =======================
     // PUT /api/user/profile
     // =======================
-    [HttpPut("profile")]
+    [HttpPatch("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)
     {
         var userId = GetCurrentUserId();
@@ -51,21 +51,20 @@ public sealed class UserController : BaseController
             return NotFound("User not found.");
 
         // Basic info
-        user.FirstName = dto.FirstName;
-        user.MiddleName = dto.MiddleName;
-        user.LastName = dto.LastName;
-        user.Mobile = dto.Mobile;
-        user.Address = dto.Address;
-        user.ProfileImageUrl = dto.ProfileImageUrl;
+        if (dto.FirstName is not null) user.FirstName = dto.FirstName;
+        if (dto.MiddleName is not null) user.MiddleName = dto.MiddleName;
+        if (dto.LastName is not null) user.LastName = dto.LastName;
+        if (dto.Mobile is not null) user.Mobile = dto.Mobile;
+        if (dto.Address is not null) user.Address = dto.Address;
+        if (dto.ProfileImageUrl is not null) user.ProfileImageUrl = dto.ProfileImageUrl;
 
         // Location info
-        user.CountryId = dto.CountryId;
-        user.StateId = dto.StateId;
-        user.CityId = dto.CityId;
+        if (dto.CountryId is not null) user.CountryId = dto.CountryId.Value;
+        if (dto.StateId is not null) user.StateId = dto.StateId.Value;
+        if (dto.CityId is not null) user.CityId = dto.CityId.Value;
 
         user.LastUpdatedTime = DateTime.UtcNow;
 
-        await _users.UpdateAsync(user).ConfigureAwait(false);
         await _users.SaveChangesAsync().ConfigureAwait(false);
 
         Logger.Information("User {UserId} updated profile successfully", userId);

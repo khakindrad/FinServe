@@ -24,7 +24,7 @@ public sealed class MenusController : BaseController
     public async Task<IActionResult> Get()
     {
         var menus = await _db.MenuMaster
-            .Select(m => new MenuDto(default, default, null, null, default, default) { MenuId = m.Id, Name = m.Name, Icon = m.Icon, Route = m.Route, Order = m.Sequence })
+            .Select(m => new MenuDto(m.Id, m.Name, m.Icon, m.Route, m.Sequence))
             .ToListAsync().ConfigureAwait(false);
 
         return Ok(menus);
@@ -35,13 +35,20 @@ public sealed class MenusController : BaseController
     {
         var m = await _db.MenuMaster.FindAsync(id).ConfigureAwait(false);
         if (m == null)
-            return NotFound($"Role not found with id {id}");
-        return Ok(new MenuDto(default, default, null, null, default, default) { MenuId = m.Id, Name = m.Name, Icon = m.Icon, Route = m.Route, Order = m.Sequence });
+            return NotFound($"Menu not found with id {id}");
+        return Ok(new MenuDto(m.Id, m.Name, m.Icon, m.Route, m.Sequence));
     }
 
     [HttpPost]
     public async Task<IActionResult> Post(CreateMenuDto dto)
     {
+        var exists = await _db.MenuMaster.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Menu with name {exists.Name} already exists.");
+        }
+
         var m = new MenuMaster { Name = dto.Name, ParentId = dto.ParentMenuId, Route = dto.Route, Icon = dto.Icon, Sequence = dto.Order };
         _db.MenuMaster.Add(m);
         await _db.SaveChangesAsync().ConfigureAwait(false);
@@ -49,19 +56,26 @@ public sealed class MenusController : BaseController
         return Created(m, "Menu created.");
     }
 
-    [HttpPut("{id}")]
+    [HttpPatch("{id}")]
     public async Task<IActionResult> Put(int id, UpdateMenuDto dto)
     {
         var m = await _db.MenuMaster.FindAsync(id).ConfigureAwait(false);
-        
-        if (m == null)
-            return NotFound($"Role not found with id {id}");
 
-        m.Name = dto.Name;
-        m.ParentId = dto.ParentMenuId;
-        m.Route = dto.Route;
-        m.Icon = dto.Icon;
-        m.Sequence = dto.Order;
+        if (m == null)
+            return NotFound($"Menu not found with id {id}");
+
+        var exists = await _db.MenuMaster.FirstOrDefaultAsync(x => x.Name == dto.Name).ConfigureAwait(false);
+
+        if (exists is not null)
+        {
+            return BadRequest($"Menu with name {exists.Name} already exists.");
+        }
+
+        if (dto.Name is not null) m.Name = dto.Name;
+        if (dto.ParentMenuId is not null) m.ParentId = dto.ParentMenuId;
+        if (dto.Route is not null) m.Route = dto.Route;
+        if (dto.Icon is not null) m.Icon = dto.Icon;
+        if (dto.Order is not null) m.Sequence = dto.Order.Value;
 
         await _db.SaveChangesAsync().ConfigureAwait(false);
 
@@ -72,8 +86,9 @@ public sealed class MenusController : BaseController
     public async Task<IActionResult> Delete(int id)
     {
         var m = await _db.MenuMaster.FindAsync(id).ConfigureAwait(false);
+
         if (m == null)
-            return NotFound($"Role not found with id {id}");
+            return NotFound($"Menu not found with id {id}");
 
         _db.MenuMaster.Remove(m);
         await _db.SaveChangesAsync().ConfigureAwait(false);

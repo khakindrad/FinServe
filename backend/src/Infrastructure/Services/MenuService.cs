@@ -1,24 +1,22 @@
 using Application.Dtos.Menus;
+using Common;
 using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using ILogger = Serilog.ILogger;
 
-public class MenuService : IMenuService
+public sealed class MenuService : BaseService, IMenuService
 {
     private readonly AppDbContext _db;
     private readonly IMemoryCache _cache;
-    private readonly ILogger<MenuService> _logger;
 
-
-    public MenuService(AppDbContext db, IMemoryCache cache, ILogger<MenuService> logger)
+    public MenuService(ILogger logger, AppDbContext db, IMemoryCache cache)
+        :base(logger.ForContext<MenuService>(), null)
     {
         _db = db;
         _cache = cache;
-        _logger = logger;
     }
-
 
     public async Task<List<MenuDto>> GetMenuForRolesAsync(IEnumerable<string> roles)
     {
@@ -44,14 +42,7 @@ public class MenuService : IMenuService
         .ToListAsync().ConfigureAwait(false);
 
         // Build hierarchy
-        var dict = menus.ToDictionary(m => m.Id, m => new MenuDto(default, default, null, null, default, default)
-        {
-            MenuId = m.Id,
-            Name = m.Name,
-            Route = m.Route,
-            Icon = m.Icon
-        });
-
+        var dict = menus.ToDictionary(m => m.Id, m => new MenuDto(m.Id, m.Name, m.Route, m.Icon, m.Sequence));
 
         var roots = new List<MenuDto>();
 

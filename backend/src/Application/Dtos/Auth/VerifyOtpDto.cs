@@ -1,3 +1,3 @@
 ﻿namespace Application.Dtos.Auth;
 
-public record VerifyOtpDto(int UserId, string Otp);
+public record VerifyOtpDto(string Otp);
