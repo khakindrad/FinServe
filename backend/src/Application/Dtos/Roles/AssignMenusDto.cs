@@ -1,3 +1,3 @@
-﻿namespace Application.Dtos.Menus;
+﻿namespace Application.Dtos.Roles;
 
 public sealed record AssignMenusDto(List<int> MenuIds);

@@ -118,13 +118,6 @@ public sealed class RolesController : BaseController
         if (role is null)
             return NotFound($"Role not found with id {roleId}");
 
-        var menuExists = role.RoleMenus.FirstOrDefault(x => dto.MenuIds.Contains(x.MenuId));
-
-        if (menuExists is not null)
-        {
-            return BadRequest($"Role {role.Name} with menu {menuExists.MenuMaster.Name} already exists.");
-        }
-
         // Remove old assignments
         var old = _db.RoleMenus.Where(rm => rm.RoleId == roleId);
         _db.RoleMenus.RemoveRange(old);

@@ -6,6 +6,7 @@ using Infrastructure.Data;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
 using ILogger = Serilog.ILogger;
 
 namespace WebAPI.Controllers;
@@ -123,10 +124,15 @@ public sealed class AdminController : BaseController
         }
     }
 
-    [HttpPost("assign")]
-    public async Task<IActionResult> AssignRoles([FromBody] AssignRoleDto dto)
+    [HttpPost("assign/{userId}")]
+    public async Task<IActionResult> AssignRoles(int userId, [FromBody] AssignRoleDto dto)
     {
-        await _userRoleService.AssignRolesAsync(dto.UserId, dto.RoleIds).ConfigureAwait(false);
+        var user = await _users.GetByIdAsync(userId).ConfigureAwait(false);
+
+        if (user == null)
+            return NotFound("User not found.");
+
+        await _userRoleService.AssignRolesAsync(userId, dto.RoleIds).ConfigureAwait(false);
 
         return Ok("Roles assigned successfully.");
     }
@@ -135,8 +141,6 @@ public sealed class AdminController : BaseController
     /// Unlock a user account (clear lockout and reset failed attempts).
     /// Only Admin can call.
     /// </summary>
-    /// <param name="userId">User id to unlock</param>
-    /// <param name="body">Optional: { "reactivate": true } to set IsActive = true</param>
     [HttpPatch("unlock/{userId}")]
     public async Task<IActionResult> UnlockUser(int userId)
     {
