@@ -28,8 +28,8 @@ export function useAdminMenu() {
             order: 2,
             children: [
               { id: 21, name: "Approve Users", path: "/admin/dashboard/user-management/approve-user", order: 1 },
-              { id: 22, name: "All Users", path: "#", order: 2 },
-              { id: 23, name: "All Roles", path: "#", order: 3 },
+              { id: 22, name: "All Users", path: "/admin/dashboard/user-management/all-users", order: 2 },
+              { id: 23, name: "All Roles", path: "/admin/dashboard/user-management/get-roles", order: 3 },
             ],
           },
           {

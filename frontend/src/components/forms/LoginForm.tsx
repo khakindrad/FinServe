@@ -59,7 +59,7 @@ export default function LoginForm() {
     if(roles)
     {
       const isAdmin = roles.includes("Admin");
-      router.push(isAdmin ? "/admin/dashboard" : "/User/dashboard");
+      router.push("/admin/dashboard");
     }
   }
   return (

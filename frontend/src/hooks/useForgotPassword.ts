@@ -14,8 +14,11 @@ export function useForgotPassword(
     setErrorMsg("");
     setSuccessMsg("");
     try {
-      //const res = await api.forgotPassword({ email });
-      setSuccessMsg("Reset link has been sent to your email.");
+      const res = await api.forgotPassword({email});
+      if(res.statusCode===200)
+      {
+         setSuccessMsg(res.message);
+      }
     } catch (err: any) {
       setErrorMsg(err.message || "Unable to send reset link. Try again.");
     }

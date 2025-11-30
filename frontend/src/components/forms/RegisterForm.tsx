@@ -54,7 +54,7 @@ export default function RegisterForm() {
      }).catch((err) => {
       console.error("Error fetching Genders:", err);
     });
-  })
+  },[])
   // Load countries on mount
   useEffect(() => {
     api.GetCountry()
@@ -72,7 +72,9 @@ export default function RegisterForm() {
     if (!form.countryId) return;
     api.GetState(form.countryId)
       .then((res) => {
-        setStates(res.data);
+        const stateData = res?.data;
+        const stateList = stateData ? [stateData] : [];
+        setStates(stateList);
       })
       .catch((err) => {
         console.error("Error fetching states:", err);
@@ -87,7 +89,12 @@ export default function RegisterForm() {
       return;
     }
     api.GetCity(form.stateId)
-      .then((res) => setCities(res.data))
+      .then((res) =>
+        {
+        const CitiesData = res?.data;
+        const CityList = CitiesData ? [CitiesData] : [];
+        setCities(CityList);
+        } )
       .catch(console.error);
 
     setForm((prev) => ({ ...prev, cityId: "" }));

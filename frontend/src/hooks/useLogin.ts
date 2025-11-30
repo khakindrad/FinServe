@@ -6,15 +6,16 @@ import { api } from "@/lib/api";
 import { setAccessToken } from "@/lib/auth";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-
+import { useAuthStore } from "@/store/useAuthStore";
 export function useLogin(
   setErrorMsg: (m: string) => void,
   setSuccessMsg: (m: string) => void,
   setAlertMsg: (m: string) => void
 ) {
-  const { setUser } = useAuth();
+  //const { setUser } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const setUser = useAuthStore((state) => state.setUser);
 
   async function login(email: string, password: string) {
     setLoading(true);
@@ -27,8 +28,8 @@ export function useLogin(
 
       if (statusCode === 200) {
         if (data?.accessToken) setAccessToken(data.accessToken);
+        //if (data?.user) setUser(data.user);
         if (data?.user) setUser(data.user);
-
         if (message) setSuccessMsg(message);
 
         return data.user.roles;
