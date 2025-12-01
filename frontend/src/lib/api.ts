@@ -107,7 +107,7 @@ export const api = {
          ------------------------------User-----------------------------------------
   */
   getRoles: () =>
-    request("/User/roles", { method: "GET" }),
+    request("/Roles", { method: "GET" }),
 
   getModules: () =>
     request("/User/modules", { method: "GET" }),
@@ -183,6 +183,11 @@ export const api = {
     }),
   addCity: (data: any) =>
     request("/Cities", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  addRoles: (data: any) =>
+    request("/Roles", {
       method: "POST",
       body: JSON.stringify(data),
     }),

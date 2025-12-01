@@ -1,155 +1,286 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { AddCountryDialog } from "@/components/forms/master/addCountry";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Search } from "lucide-react";
 import { useCountries } from "@/hooks/useCountries";
 import { exportToExcel } from "@/lib/exportExcel";
-import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
+import AppAlert from "@/components/common/AppAlert";
+import { api } from "@/lib/api";
 
-export default function CountriesfPage() {
-    const { toast } = useToast();
-    const { countries, loading, reload } = useCountries();
+export default function CountriesPage() {
+  const { countries, loading, reload } = useCountries();
 
-    const [search, setSearch] = useState("");
-    const [modalOpen, setModalOpen] = useState(false);
-    const PAGE_SIZE = 5;
-    const filtered = useMemo(() => {
-        return countries.filter(c =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-        );
-    }, [countries, search]);
-    const [page, setPage] = useState(1);
-    // PAGINATED
-    const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-    function exportData() {
-        exportToExcel(countries, "Country Details");
-        toast({ title: "Exported", description: "Excel downloaded" });
+  // UI
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 5;
+
+  // Form Fields
+  const [countryName, setCountryName] = useState("");
+  const [isoCode, setIsoCode] = useState("");
+  const [mobileCode, setMobileCode] = useState("");
+  const [isActive, setIsActive] = useState(true);
+
+  // Alerts
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
+  /** Reset Form */
+  function resetForm() {
+    setCountryName("");
+    setIsoCode("");
+    setMobileCode("");
+    setIsActive(true);
+  }
+
+  /** Submit */
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await api.addCountrys({
+        name: countryName,
+        isoCode,
+        mobileCode,
+        isActive,
+      });
+
+      if (res?.statusCode === 200 || res?.statusCode === 201) {
+        setSuccessMsg("Country added successfully!");
+        reload();
+        resetForm();
+        setShowForm(false);
+      } else {
+        setErrorMsg(res.message || "Failed to add country!");
+      }
+    } catch (err) {
+      setErrorMsg(err.message || "Failed to add country!");
     }
-    // LOADING SKELETON
-    if (loading) {
-        return (
-            <div className="p-6 space-y-4">
-                <Skeleton className="h-8 w-60" />
-                {[...Array(5)].map((_, i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                ))}
+  }
+
+  /** Auto Hide Alerts */
+  useEffect(() => {
+    if (errorMsg || successMsg) {
+      const t = setTimeout(() => {
+        setErrorMsg("");
+        setSuccessMsg("");
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [errorMsg, successMsg]);
+
+  /** Filter + paginate */
+  const filtered = useMemo(
+    () => countries.filter((c) =>
+      c.name.toLowerCase().includes(search.toLowerCase())
+    ),
+    [countries, search]
+  );
+
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+
+  /** Skeleton Loader UI */
+  const TableSkeleton = () => (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-28" />
+      </div>
+
+      <div className="border rounded-lg p-4 space-y-4 bg-white shadow-sm">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="grid grid-cols-3 gap-4 p-3 border-b">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-6 w-20" />
+            <Skeleton className="h-8 w-32 justify-self-end" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="p-6 flex justify-center">
+      <Card className="w-full max-w-7xl shadow-md border rounded-xl">
+
+        <CardHeader className="flex justify-between items-center">
+          <CardTitle className="text-2xl">Country Management</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+
+          {errorMsg && <AppAlert type="error" message={errorMsg} />}
+          {successMsg && <AppAlert type="success" message={successMsg} />}
+
+          {/* TOP BAR */}
+          {!showForm && !loading && (
+            <div className="flex justify-between items-center mb-6">
+
+              {/* Search with icon */}
+              <div className="relative max-w-xs">
+                <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search country..."
+                  className="pl-10"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  className="bg-black hover:bg-gray-800"
+                  onClick={() => exportToExcel(countries, "Country Details")}
+                >
+                  Export Excel
+                </Button>
+
+                <Button className="bg-blue-600" onClick={() => setShowForm(true)}>
+                  + Add Country
+                </Button>
+              </div>
             </div>
-        );
-    }
-    return (
-        <div className="p-6 flex justify-center">
-            <div className="w-full max-w-7xl bg-white rounded-xl shadow-lg border">
+          )}
 
-                {/* HEADER */}
-                {/* HEADER */}
-                <div className="px-6 py-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
-                    <h2 className="text-xl font-semibold text-gray-800">Manage Countries</h2>
+          {/* FORM */}
+          {showForm && (
+            <div className="mb-8 bg-gray-50 p-6 rounded-lg border">
+              <h2 className="text-lg font-semibold mb-4">Add Country</h2>
 
-                    <div className="flex gap-3">
-                        <Button onClick={exportData} className="bg-black hover:bg-gray-800">
-                            Export Excel
-                        </Button>
+              <form onSubmit={handleSubmit} className="space-y-4">
 
-                        <Button onClick={() => setModalOpen(true)} className="bg-blue-600">
-                            Add Country
-                        </Button>
-                    </div>
+                <div>
+                  <label className="text-sm font-medium">Country Name</label>
+                  <Input
+                    value={countryName}
+                    onChange={(e) => setCountryName(e.target.value)}
+                    required
+                  />
                 </div>
 
-
-                {/* CONTENT */}
-                <div className="p-6 space-y-6">
-
-                    {/* Search */}
-                    <Input
-                        placeholder="Search country..."
-                        value={search}
-                        className="w-full sm:w-72 md:w-80 max-w-md"
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-
-                    {/* TABLE */}
-                    <div className="overflow-x-auto rounded-xl border shadow-sm bg-white">
-                        <table className="min-w-[800px]">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    <th className="px-4 py-3 text-left">Country</th>
-                                    <th className="px-4 py-3 text-left">Status</th>
-                                    <th className="px-4 py-3 text-right">Actions</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {paginated.length === 0 && (
-                                    <tr>
-                                        <td colSpan={3} className="py-6 text-center text-gray-500 italic">
-                                            No countries found
-                                        </td>
-                                    </tr>
-                                )}
-
-                                {paginated.map((c) => (
-                                    <tr
-                                        key={c.id}
-                                        className="border-t hover:bg-gray-50 transition"
-                                    >
-                                        <td className="px-4 py-3">{c.name}</td>
-
-                                        <td className="px-4 py-3">
-                                            {c.isActive ? (
-                                                <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                                                    Active
-                                                </span>
-                                            ) : (
-                                                <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                                                    Inactive
-                                                </span>
-                                            )}
-                                        </td>
-
-                                        <td className="px-4 py-3 text-right space-x-2">
-                                            <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
-                                                Edit
-                                            </Button>
-
-                                            <Button
-                                                size="sm"
-                                                variant={c.isActive ? "destructive" : "default"}
-                                                className={c.isActive ? "" : "bg-green-600 hover:bg-green-700"}
-                                            >
-                                                {c.isActive ? "Deactivate" : "Activate"}
-                                            </Button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-
-                        </table>
-                    </div>
-                    {/*PAGINATION*/}
-                    <div className="flex justify-between mt-4 items-center">
-                        <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-                            Previous
-                        </Button>
-
-                        <p className="text-gray-600 font-medium">
-                            Page {page} / {totalPages}
-                        </p>
-
-                        <Button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
-                            Next
-                        </Button>
-                    </div>
+                <div>
+                  <label className="text-sm font-medium">ISO Code</label>
+                  <Input
+                    value={isoCode}
+                    onChange={(e) => setIsoCode(e.target.value)}
+                    required
+                  />
                 </div>
-            </div>
 
-            {modalOpen && (
-                <AddCountryDialog open={modalOpen} onClose={() => setModalOpen(false)} onSaved={reload} />
-            )}
-        </div>
-    );
+                <div>
+                  <label className="text-sm font-medium">Mobile Code</label>
+                  <Input
+                    value={mobileCode}
+                    onChange={(e) => setMobileCode(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      resetForm();
+                      setShowForm(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button className="bg-blue-600 text-white" type="submit">
+                    Save Country
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* TABLE / SKELETON */}
+          {!showForm && (loading ? <TableSkeleton /> : (
+            <div className="overflow-x-auto rounded-lg border shadow-sm bg-white">
+              <table className="min-w-[800px] w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-3">Country</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {paginated.length === 0 && (
+                    <tr>
+                      <td className="py-6 text-center text-gray-500 italic" colSpan={3}>
+                        No countries found
+                      </td>
+                    </tr>
+                  )}
+
+                  {paginated.map((c) => (
+                    <tr key={c.id} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3">{c.name}</td>
+
+                      <td className="px-4 py-3">
+                        {c.isActive ? (
+                          <span className="px-3 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                            Inactive
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <Button size="sm" className="bg-yellow-600 hover:bg-yellow-700">
+                          Edit
+                        </Button>
+
+                        <Button
+                          size="sm"
+                          variant={c.isActive ? "destructive" : "default"}
+                          className={c.isActive ? "" : "bg-green-600 hover:bg-green-700"}
+                        >
+                          {c.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
+        </CardContent>
+
+        {/* PAGINATION */}
+        {!showForm && !loading && (
+          <CardFooter className="flex justify-between items-center p-4">
+            <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
+              Previous
+            </Button>
+
+            <p className="text-gray-600 font-medium">
+              Page {page} / {totalPages}
+            </p>
+
+            <Button disabled={page === totalPages} onClick={() => setPage(page + 1)}>
+              Next
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
+    </div>
+  );
 }

@@ -3,20 +3,19 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useEffect, useState } from "react";
-import { getAccessToken, clearAccessToken } from "@/lib/auth";
+import { clearAccessToken } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import { Menu, X } from "lucide-react";
 
-export default function Header() {
+export default function Header({ sidebarOpen, setSidebarOpen }) {
   const user = useAuthStore((state) => state.user);
   const logoutUser = useAuthStore((state) => state.logout);
-  const [token, setToken] = useState<string | null>(null);
-
   const router = useRouter();
+
   function handleLogout() {
-    clearAccessToken();      // remove token from storage
-    logoutUser();            // clear zustand user
-    router.push("/login");   // redirect to login
+    clearAccessToken();
+    logoutUser();
+    router.push("/login");
   }
 
   return (
@@ -25,19 +24,28 @@ export default function Header() {
         FinServe
       </h1>
 
-      <div className="flex gap-4">
-        {getAccessToken() ? (
-          <>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
-            </Button>
-          </>
+      <div className="flex items-center gap-4">
+
+        {/* MOBILE TOGGLE BUTTON — ONLY WHEN LOGGED IN */}
+        {user && (
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden p-2 rounded border text-gray-700"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        )}
+
+        {/* LOGIN/LOGOUT BUTTONS */}
+        {user ? (
+          <Button variant="outline" onClick={handleLogout}>
+            Logout
+          </Button>
         ) : (
           <>
             <Link href="/login">
               <Button variant="outline">Login</Button>
             </Link>
-
             <Link href="/register">
               <Button>Register</Button>
             </Link>
